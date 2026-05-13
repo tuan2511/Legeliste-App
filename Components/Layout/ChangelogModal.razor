@@ -1,0 +1,119 @@
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+@inject LegelisteApp.Services.ChangelogService ChangelogService
+@implements IDisposable
+
+@if (isVisible)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 transition-opacity duration-300">
+        <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden border border-slate-200 transition-all duration-300 transform scale-100">
+            <div class="bg-blue-600 px-6 py-8 text-center text-white relative">
+                <div class="absolute top-4 right-4">
+                     <button @onclick="Close" class="text-white/80 hover:text-white transition-colors">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur">
+                    <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold">Was ist neu?</h2>
+                <p class="text-blue-100">Version @CurrentAppVersion</p>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div class="space-y-4">
+                    <div class="flex gap-4">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-slate-900">Performance-Boost</h4>
+                            <p class="text-sm text-slate-500">Die Navigation und das Laden der Daten sind jetzt spürbar schneller.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-slate-900">Eingabefelder optimiert</h4>
+                            <p class="text-sm text-slate-500">Das "0-Problem" wurde behoben. Felder sind jetzt beim Klicken leer.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-slate-900">Biologisches Alter</h4>
+                            <p class="text-sm text-slate-500">Das Herdenalter wird nun dynamisch ab 18 Wochen berechnet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button @onclick="Close" class="w-full rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg hover:bg-slate-800 transition-all active:scale-[0.98]">
+                    Verstanden
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private const string CurrentAppVersion = "1.1";
+    private bool isVisible = false;
+
+    protected override void OnInitialized()
+    {
+        ChangelogService.OnShowRequested += Show;
+    }
+
+    public void Dispose()
+    {
+        ChangelogService.OnShowRequested -= Show;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try 
+            {
+                var storedVersion = await JS.InvokeAsync<string>("localStorage.getItem", "last_seen_version");
+                if (storedVersion != CurrentAppVersion)
+                {
+                    isVisible = true;
+                    StateHasChanged();
+                }
+            }
+            catch 
+            {
+                // localStorage might not be available in some scenarios (e.g. prerendering)
+            }
+        }
+    }
+
+    public void Show()
+    {
+        isVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task Close()
+    {
+        isVisible = false;
+        await JS.InvokeVoidAsync("localStorage.setItem", "last_seen_version", CurrentAppVersion);
+    }
+}

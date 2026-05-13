@@ -34,6 +34,7 @@ builder.Services.AddScoped<ExportService>();
 builder.Services.AddScoped<DailyEntryService>();
 builder.Services.AddScoped<FlockCalculationService>();
 builder.Services.AddSingleton<PerformanceNormService>();
+builder.Services.AddScoped<ChangelogService>();
 
 var app = builder.Build();
 

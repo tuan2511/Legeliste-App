@@ -1,4 +1,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
+@inject LegelisteApp.Services.ChangelogService ChangelogService
+@rendermode InteractiveServer
+
 
 <aside id="sidebar"
     class="fixed inset-y-0 left-0 z-50 flex w-72 lg:w-64 flex-col border-r border-slate-200 bg-white
@@ -116,6 +119,16 @@
                 </AuthorizeView>
             </Authorized>
         </AuthorizeView>
+
+        <div class="pt-4 mt-4 border-t border-slate-100">
+            <button @onclick="() => ChangelogService.RequestShow()" 
+                class="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-700">
+                <svg class="h-5 w-5 shrink-0 text-slate-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Was ist neu?
+            </button>
+        </div>
     </nav>
 
     <!-- Footer / User -->
