@@ -25,6 +25,17 @@
 </header>
 
 <div class="mx-auto max-w-2xl px-6 py-8">
+    @if (isLoading)
+    {
+        <div class="flex h-[50vh] items-center justify-center">
+            <div class="flex flex-col items-center gap-3">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+                <p class="text-sm font-medium text-slate-500">Daten werden geladen...</p>
+            </div>
+        </div>
+    }
+    else
+    {
     @if (isSuccess)
     {
         <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
@@ -288,6 +299,7 @@
             </div>
         </EditForm>
     }
+    }
 </div>
 
 @code {
@@ -300,6 +312,7 @@
     private bool entryAlreadyExists = false;
     private int currentUserId = 0;
     private string? errorMessage;
+    private bool isLoading = true;
 
     [SupplyParameterFromQuery]
     public string? PreDate { get; set; }
@@ -309,7 +322,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         await LoadInitialData();
+        isLoading = false;
     }
 
     private async Task LoadInitialData()

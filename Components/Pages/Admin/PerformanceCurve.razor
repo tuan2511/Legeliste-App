@@ -22,7 +22,18 @@
 </header>
 
 <div class="p-6 space-y-6">
-    <div class="mb-6 flex items-center gap-4">
+    @if (isLoading)
+    {
+        <div class="flex h-[50vh] items-center justify-center">
+            <div class="flex flex-col items-center gap-3">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+                <p class="text-sm font-medium text-slate-500">Daten werden geladen...</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="mb-6 flex items-center gap-4">
         <label class="text-sm font-medium text-slate-700">Stall wählen:</label>
         <select class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500/20 outline-none" @bind="selectedStallId" @bind:after="OnStallChanged">
             <option value="0">Bitte wählen...</option>
@@ -53,15 +64,19 @@
             <p class="text-slate-500 font-medium">Bitte wähle einen Stall aus, um die Leistungskurve anzuzeigen.</p>
         </div>
     }
+    }
+    }
 </div>
 
 @code {
     private List<Stall> allStalls = new();
     private List<DailyEntry> allHistoryEntries = new();
     private int selectedStallId = 0;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         using var context = await DbFactory.CreateDbContextAsync();
         allStalls = await context.Stalls.AsNoTracking().OrderBy(s => s.Name).ToListAsync();
         
@@ -72,6 +87,8 @@
             .OrderBy(e => e.Date)
             .AsNoTracking()
             .ToListAsync();
+            
+        isLoading = false;
     }
 
     private async Task OnStallChanged()

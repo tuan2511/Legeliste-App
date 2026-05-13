@@ -29,6 +29,17 @@
 </header>
 
 <div class="mx-auto max-w-4xl p-4 sm:p-6">
+    @if (isLoading)
+    {
+        <div class="flex h-[50vh] items-center justify-center">
+            <div class="flex flex-col items-center gap-3">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+                <p class="text-sm font-medium text-slate-500">Daten werden geladen...</p>
+            </div>
+        </div>
+    }
+    else
+    {
     <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-2">
             <button @onclick="PrevMonth" class="rounded-lg p-2 hover:bg-slate-100 transition-colors">
@@ -101,6 +112,7 @@
             </div>
         </div>
     }
+    }
 </div>
 
 @code {
@@ -110,12 +122,15 @@
     private HashSet<DateTime> completedDates = new();
     private List<DateTime> days = new();
     private int firstDayOffset;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         using var context = await DbFactory.CreateDbContextAsync();
         stalls = await context.Stalls.OrderBy(s => s.Name).ToListAsync();
         GenerateCalendarGrid();
+        isLoading = false;
     }
 
     private async Task LoadCalendarData()

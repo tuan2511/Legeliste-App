@@ -20,6 +20,17 @@
 </header>
 
 <div class="grid gap-6 p-6 lg:grid-cols-12">
+    @if (isLoading)
+    {
+        <div class="lg:col-span-12 flex h-[50vh] items-center justify-center">
+            <div class="flex flex-col items-center gap-3">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+                <p class="text-sm font-medium text-slate-500">Daten werden geladen...</p>
+            </div>
+        </div>
+    }
+    else
+    {
     <!-- Neuer Benutzer Formular -->
     <div class="lg:col-span-4">
         <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -115,6 +126,7 @@
             </div>
         </div>
     </div>
+    }
 </div>
 
 @code {
@@ -123,10 +135,13 @@
     private string password = "";
     private string errorMessage = "";
     private string successMessage = "";
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         await LoadUsersAsync();
+        isLoading = false;
     }
 
     private async Task LoadUsersAsync()

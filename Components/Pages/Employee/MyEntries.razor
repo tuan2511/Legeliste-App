@@ -33,6 +33,17 @@
 </header>
 
 <div class="p-6 space-y-6">
+    @if (isLoading)
+    {
+        <div class="flex h-[50vh] items-center justify-center">
+            <div class="flex flex-col items-center gap-3">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+                <p class="text-sm font-medium text-slate-500">Daten werden geladen...</p>
+            </div>
+        </div>
+    }
+    else
+    {
     @if (entries.Count == 0)
     {
         <div class="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
@@ -148,6 +159,7 @@
             </div>
         </div>
     }
+    }
 </div>
 
 <!-- Gewichte-Nachtragen Modal -->
@@ -244,9 +256,11 @@
     private decimal? editKoerpergewicht;
     private string saveMessage = "";
     private ClaimsPrincipal? currentUser;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         currentUser = authState.User;
         
@@ -254,6 +268,7 @@
         stalls = await context.Stalls.OrderBy(s => s.Name).ToListAsync();
         
         await LoadEntriesAsync();
+        isLoading = false;
     }
 
     private async Task LoadEntriesAsync()

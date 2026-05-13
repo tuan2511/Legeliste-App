@@ -29,6 +29,17 @@
 </header>
 
 <div class="space-y-6 p-6">
+    @if (isLoading)
+    {
+        <div class="flex h-[50vh] items-center justify-center">
+            <div class="flex flex-col items-center gap-3">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+                <p class="text-sm font-medium text-slate-500">Daten werden geladen...</p>
+            </div>
+        </div>
+    }
+    else
+    {
     <!-- View Switcher (Subtabs) -->
     <div class="flex gap-2 p-1 bg-slate-100 rounded-lg w-fit">
         <button class="px-4 py-1.5 text-sm font-medium rounded-md transition-all @(statsSubTab == 1 ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700")" @onclick="() => SetStatsSubTab(1)">
@@ -310,6 +321,7 @@
             </table>
         </div>
     </div>
+    }
 </div>
 
 @if (editingEntry != null)
@@ -394,9 +406,11 @@
     private DailyEntry? editingEntry = null;
     private bool showDeleteConfirm = false;
     private int deleteEntryId = 0;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         isAdmin = user.IsInRole("Admin");
@@ -411,6 +425,7 @@
         }
 
         await LoadDataAsync();
+        isLoading = false;
     }
 
     private void SetTab(int tabIndex)
