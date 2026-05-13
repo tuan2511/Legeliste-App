@@ -1,0 +1,153 @@
+@using Microsoft.AspNetCore.Components.Authorization
+
+<aside id="sidebar"
+    class="fixed inset-y-0 left-0 z-50 flex w-72 lg:w-64 flex-col border-r border-slate-200 bg-white
+           transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+    <!-- Logo -->
+    <div class="flex h-16 items-center gap-2 border-b border-slate-200 px-6">
+        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shrink-0">
+            <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <ellipse cx="12" cy="12" rx="9" ry="11" stroke-width="2"/>
+                <ellipse cx="12" cy="10" rx="3" ry="4" stroke-width="2"/>
+            </svg>
+        </div>
+        <span class="text-lg font-semibold text-slate-900">LegelisteApp</span>
+        <!-- Close button (mobile only) -->
+        <button onclick="window.toggleMobileMenu(false)" class="ml-auto p-1 text-slate-400 hover:text-slate-600 lg:hidden">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+        <AuthorizeView>
+            <NotAuthorized>
+                <NavLink href="login"
+                    class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                    Match="NavLinkMatch.All">
+                    <svg class="h-5 w-5 shrink-0 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                    </svg>
+                    Login
+                </NavLink>
+            </NotAuthorized>
+
+            <Authorized>
+                <AuthorizeView Roles="Admin, Mitarbeiter" Context="inner">
+                    <Authorized>
+                        <NavLink href="kalender"
+                            class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                            @onclick="CloseSidebar">
+                            <svg class="h-5 w-5 shrink-0 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Vollständigkeits-Check
+                        </NavLink>
+                        <NavLink href="datenerfassung"
+                            class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                            Match="NavLinkMatch.All"
+                            @onclick="CloseSidebar">
+                            <svg class="h-5 w-5 shrink-0 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                            </svg>
+                            Dateneingabe
+                        </NavLink>
+                    </Authorized>
+                </AuthorizeView>
+
+                <NavLink href="aktuelle-eintraege"
+                    class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                    Match="NavLinkMatch.All"
+                    @onclick="CloseSidebar">
+                    <svg class="h-5 w-5 shrink-0 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    Aktuelle Einträge
+                </NavLink>
+
+                <AuthorizeView Roles="Admin" Context="adminCtx">
+                    <Authorized>
+                        <p class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Auswertung</p>
+                        <NavLink href="admin"
+                            class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                            Match="NavLinkMatch.All"
+                            @onclick="CloseSidebar">
+                            <svg class="h-5 w-5 shrink-0 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2"/>
+                                <rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2"/>
+                                <rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2"/>
+                                <rect x="14" y="14" width="7" height="7" rx="1" stroke-width="2"/>
+                            </svg>
+                            Dashboard
+                        </NavLink>
+                        <NavLink href="leistungskurve"
+                            class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                            Match="NavLinkMatch.All"
+                            @onclick="CloseSidebar">
+                            <svg class="h-5 w-5 shrink-0 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                            </svg>
+                            Leistungskurve
+                        </NavLink>
+
+                        <p class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Verwaltung</p>
+                        <NavLink href="staelle"
+                            class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                            Match="NavLinkMatch.All"
+                            @onclick="CloseSidebar">
+                            <svg class="h-5 w-5 shrink-0 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <ellipse cx="12" cy="12" rx="9" ry="11" stroke-width="2"/>
+                                <ellipse cx="12" cy="10" rx="3" ry="4" stroke-width="2"/>
+                            </svg>
+                            Ställe
+                        </NavLink>
+                        <NavLink href="benutzer"
+                            class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                            Match="NavLinkMatch.All"
+                            @onclick="CloseSidebar">
+                            <svg class="h-5 w-5 shrink-0 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m0 0V19a2 2 0 01-2 2H5a2 2 0 01-2-2v-5"/>
+                            </svg>
+                            Benutzer
+                        </NavLink>
+                    </Authorized>
+                </AuthorizeView>
+            </Authorized>
+        </AuthorizeView>
+    </nav>
+
+    <!-- Footer / User -->
+    <div class="border-t border-slate-200 p-4">
+        <AuthorizeView>
+            <Authorized>
+                <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 shrink-0">
+                        <span class="text-sm font-medium text-slate-700">
+                            @(context.User.Identity?.Name?.Substring(0, Math.Min(2, context.User.Identity?.Name?.Length ?? 0)).ToUpper())
+                        </span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-medium text-slate-900">@context.User.Identity?.Name</p>
+                        <p class="truncate text-xs text-slate-500">
+                            @(context.User.IsInRole("Admin") ? "Administrator" : (context.User.IsInRole("Praktikant") ? "Praktikant" : "Mitarbeiter"))
+                        </p>
+                    </div>
+                    <a href="logout" class="p-1.5 text-slate-400 hover:text-slate-600 shrink-0" title="Abmelden">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                    </a>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</aside>
+
+@code {
+    private void CloseSidebar()
+    {
+        // Wird auf Mobile nach Link-Klick aufgerufen
+    }
+}

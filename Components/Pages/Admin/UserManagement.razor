@@ -1,0 +1,172 @@
+@page "/benutzer"
+@using LegelisteApp.Data
+@using LegelisteApp.Data.Models
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject IDbContextFactory<AppDbContext> DbFactory
+@rendermode InteractiveServer
+
+<PageTitle>Stammtdaten: Benutzer</PageTitle>
+
+<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div class="flex h-16 items-center justify-between px-6">
+        <div>
+            <h1 class="text-lg font-semibold text-slate-900">Benutzer-Verwaltung</h1>
+            <p class="text-sm text-slate-500">Systembenutzer und Berechtigungen verwalten</p>
+        </div>
+    </div>
+</header>
+
+<div class="grid gap-6 p-6 lg:grid-cols-12">
+    <!-- Neuer Benutzer Formular -->
+    <div class="lg:col-span-4">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+                <h3 class="text-base font-semibold text-slate-900">Neuen Benutzer anlegen</h3>
+            </div>
+            <div class="p-6">
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="mb-4 rounded-lg bg-red-50 p-3 text-xs font-medium text-red-800 border border-red-100">
+                        @errorMessage
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="mb-4 rounded-lg bg-emerald-50 p-3 text-xs font-medium text-emerald-800 border border-emerald-100">
+                        @successMessage
+                    </div>
+                }
+
+                <EditForm Model="newUser" OnSubmit="SaveUser">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="space-y-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Benutzername</label>
+                            <InputText @bind-Value="newUser.Username" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" />
+                            <ValidationMessage For="@(() => newUser.Username)" class="text-xs text-red-500 mt-1" />
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Passwort</label>
+                            <InputText @bind-Value="password" type="password" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" />
+                        </div>
+                        
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Rolle</label>
+                            <InputSelect @bind-Value="newUser.Role" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20">
+                                @foreach (var role in Enum.GetValues<UserRole>())
+                                {
+                                    <option value="@role">@role</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        
+                        <button type="submit" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                            Benutzer anlegen
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+    <!-- Benutzer Liste -->
+    <div class="lg:col-span-8">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-base font-semibold text-slate-900">Vorhandene Benutzer</h3>
+                <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">@users.Count Benutzer</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="bg-slate-50/80 text-slate-500 border-b border-slate-200 uppercase text-[10px] font-bold tracking-wider">
+                            <th class="px-6 py-3">ID</th>
+                            <th class="px-6 py-3">Benutzername</th>
+                            <th class="px-6 py-3">Rolle</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach (var user in users)
+                        {
+                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                <td class="px-6 py-4 font-mono text-slate-400">@user.Id</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500 uppercase">
+                                            @user.Username.Substring(0, 1)
+                                        </div>
+                                        <span class="font-medium text-slate-900">@user.Username</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium @(user.Role == UserRole.Admin ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700")">
+                                        @user.Role
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<User> users = new();
+    private User newUser = new() { Username = "", PasswordHash = "" };
+    private string password = "";
+    private string errorMessage = "";
+    private string successMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        users = await context.Users.OrderBy(u => u.Username).ToListAsync();
+    }
+
+    private async Task SaveUser()
+    {
+        errorMessage = "";
+        successMessage = "";
+
+        if (string.IsNullOrWhiteSpace(newUser.Username) || string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = "Benutzername und Passwort sind erforderlich.";
+            return;
+        }
+
+        using var context = await DbFactory.CreateDbContextAsync();
+        
+        var exists = await context.Users.AnyAsync(u => u.Username == newUser.Username);
+        if (exists)
+        {
+            errorMessage = "Ein Benutzer mit diesem Namen existiert bereits.";
+            return;
+        }
+
+        var passwordHasher = new PasswordHasher<User>();
+        newUser.PasswordHash = passwordHasher.HashPassword(newUser, password);
+
+        context.Users.Add(newUser);
+        await context.SaveChangesAsync();
+
+        successMessage = $"Benutzer '{newUser.Username}' wurde erfolgreich angelegt.";
+
+        // Reset form
+        newUser = new User { Username = "", PasswordHash = "" }; 
+        password = "";
+        
+        await LoadUsersAsync(); // Refresh list
+    }
+}

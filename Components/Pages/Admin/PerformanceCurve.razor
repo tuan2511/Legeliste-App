@@ -1,0 +1,155 @@
+@page "/leistungskurve"
+@using LegelisteApp.Data
+@using LegelisteApp.Data.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@attribute [Authorize(Roles = "Admin")]
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject LegelisteApp.Services.FlockCalculationService CalcService
+@inject LegelisteApp.Services.PerformanceNormService NormService
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<PageTitle>Leistungskurve - LegelisteApp</PageTitle>
+
+<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div class="flex h-16 items-center justify-between px-6">
+        <div>
+            <h1 class="text-lg font-semibold text-slate-900">Leistungskurve</h1>
+            <p class="text-sm text-slate-500">Vergleich IST vs. NORM für Legeleistung, Eigewicht und Verluste</p>
+        </div>
+    </div>
+</header>
+
+<div class="p-6 space-y-6">
+    <div class="mb-6 flex items-center gap-4">
+        <label class="text-sm font-medium text-slate-700">Stall wählen:</label>
+        <select class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500/20 outline-none" @bind="selectedStallId" @bind:after="OnStallChanged">
+            <option value="0">Bitte wählen...</option>
+            @foreach (var s in allStalls) { <option value="@s.Id">@s.Name</option> }
+        </select>
+    </div>
+
+    @if (selectedStallId > 0)
+    {
+        <div class="rounded-xl border border-slate-200/50 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-semibold text-slate-900">Leistungskurve (@allStalls.FirstOrDefault(s => s.Id == selectedStallId)?.Name)</h3>
+                    <p class="text-sm text-slate-500">Vergleich der aktuellen Herde mit Lohmann Brown Standard</p>
+                </div>
+            </div>
+            <div class="p-4 sm:p-6 h-[400px] sm:h-[600px]">
+                <canvas id="performanceCurveChart"></canvas>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+            <svg class="mx-auto h-12 w-12 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+            </svg>
+            <p class="text-slate-500 font-medium">Bitte wähle einen Stall aus, um die Leistungskurve anzuzeigen.</p>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Stall> allStalls = new();
+    private List<DailyEntry> allHistoryEntries = new();
+    private int selectedStallId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        allStalls = await context.Stalls.AsNoTracking().OrderBy(s => s.Name).ToListAsync();
+        
+        // Laden der Einträge, die freigegeben sind, für die Auswertung
+        allHistoryEntries = await context.DailyEntries
+            .Include(e => e.Stall)
+            .Where(e => e.Status == EntryStatus.Freigegeben)
+            .OrderBy(e => e.Date)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    private async Task OnStallChanged()
+    {
+        if (selectedStallId > 0)
+        {
+            await Task.Delay(50); // DOM update
+            await UpdatePerformanceCurve();
+        }
+    }
+
+    private async Task UpdatePerformanceCurve()
+    {
+        if (selectedStallId == 0) return;
+
+        var dsStall = allStalls.FirstOrDefault(s => s.Id == selectedStallId);
+        if (dsStall == null) return;
+
+        var entries = allHistoryEntries
+            .Where(e => e.StallId == selectedStallId)
+            .OrderBy(e => e.Date)
+            .ToList();
+
+        var normData = NormService.GetNormData();
+        var labels = normData.Select(n => n.Week.ToString()).ToArray();
+
+        // IST-Daten aggregieren
+        int netLosses = 0;
+        var weeklyStats = entries
+            .Select(e => {
+                var ageWeeks = (int)(e.Date.Date - dsStall.Einstallungsdatum.Date).TotalDays / 7;
+                var week = ageWeeks + 18;
+                
+                var flockSize = dsStall.AnfangsbestandTiere - netLosses;
+                var layRate = (double)CalcService.CalculateLayingPerformance(e.Eier1Wahl + e.Eier2Wahl, flockSize);
+                
+                netLosses += (e.Verluste - (e.ZugaengeTiere ?? 0));
+                var lossPct = (double)netLosses / dsStall.AnfangsbestandTiere * 100;
+
+                return new { Week = week, LayRate = layRate, Weight = (double?)(e.Eigewicht > 0 ? (double)e.Eigewicht : null), LossPct = lossPct };
+            })
+            .GroupBy(x => x.Week)
+            .Select(g => new {
+                Week = g.Key,
+                AvgLay = g.Average(x => x.LayRate),
+                AvgWeight = g.Any(x => x.Weight.HasValue) ? g.Where(x => x.Weight.HasValue).Average(x => x.Weight.Value) : (double?)null,
+                MaxLoss = g.Max(x => x.LossPct)
+            })
+            .ToList();
+
+        var actualLay = new double?[normData.Count];
+        var actualWeight = new double?[normData.Count];
+        var actualLoss = new double?[normData.Count];
+
+        foreach (var stat in weeklyStats)
+        {
+            var idx = normData.FindIndex(n => n.Week == stat.Week);
+            if (idx >= 0)
+            {
+                actualLay[idx] = Math.Round(stat.AvgLay, 2);
+                if (stat.AvgWeight.HasValue) 
+                    actualWeight[idx] = Math.Round(stat.AvgWeight.Value, 2);
+                actualLoss[idx] = Math.Round(stat.MaxLoss, 2);
+            }
+        }
+
+        var datasets = new List<object>
+        {
+            new { type = "layNorm", label = "Leistung % Norm", data = normData.Select(n => n.LayingRateNorm).ToArray() },
+            new { type = "layActual", label = "Leistung % IST", data = actualLay },
+            
+            new { type = "weightNorm", label = "Eigewicht Norm", data = normData.Select(n => n.EggWeightNorm).ToArray() },
+            new { type = "weightActual", label = "Eigewicht IST", data = actualWeight },
+            
+            new { type = "lossNorm", label = "Verluste Norm", data = normData.Select(n => n.LossRateNorm).ToArray() },
+            new { type = "lossActual", label = "Verluste IST", data = actualLoss }
+        };
+
+        await JS.InvokeVoidAsync("renderPerformanceCurve", "performanceCurveChart", labels, datasets);
+    }
+}

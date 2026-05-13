@@ -1,0 +1,304 @@
+@page "/aktuelle-eintraege"
+@using LegelisteApp.Data
+@using LegelisteApp.Data.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+@attribute [Authorize]
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject LegelisteApp.Services.DailyEntryService EntryService
+@rendermode InteractiveServer
+
+<PageTitle>Aktuelle Einträge - LegelisteApp</PageTitle>
+
+<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div class="flex h-16 items-center justify-between px-6">
+        <div>
+            <h1 class="text-lg font-semibold text-slate-900">Aktuelle Einträge</h1>
+            <p class="text-sm text-slate-500">Korrekturen möglich bis zur Freigabe durch den Admin</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <select @bind="selectedStallId" @bind:after="LoadEntriesAsync" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20">
+                <option value="0">Alle Ställe</option>
+                @foreach (var stall in stalls)
+                {
+                    <option value="@stall.Id">@stall.Name</option>
+                }
+            </select>
+            <span class="text-sm text-slate-500 hidden sm:inline">Heute: @DateTime.Today.ToString("dd. MMMM yyyy")</span>
+        </div>
+    </div>
+</header>
+
+<div class="p-6 space-y-6">
+    @if (entries.Count == 0)
+    {
+        <div class="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+            <svg class="mx-auto h-12 w-12 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <p class="text-slate-500 font-medium">Keine Einträge der letzten 14 Tage gefunden.</p>
+            <a href="/datenerfassung" class="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+                Neuen Eintrag erstellen
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Hinweis-Banner wenn Gewichte fehlen -->
+        @if (entries.Any(e => e.Eigewicht == null || e.Koerpergewicht == null))
+        {
+            <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-center gap-3">
+                <svg class="h-5 w-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
+                <p class="text-sm text-amber-800">
+                    <strong>Gewichte fehlen!</strong> Bei einigen Einträgen sind Eigewicht oder Körpergewicht noch nicht eingetragen. Bitte nachtragen.
+                </p>
+            </div>
+        }
+
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-base font-semibold text-slate-900">Letzte Einträge (Alle Ställe)</h3>
+                <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">@entries.Count Einträge</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="bg-slate-50/80 text-slate-500 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider">
+                            <th class="px-4 py-3">Datum</th>
+                            <th class="px-4 py-3">Stall</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3 text-right">Eier</th>
+                            <th class="px-4 py-3 text-center">Eigewicht</th>
+                            <th class="px-4 py-3 text-center">Körpergew.</th>
+                            <th class="px-4 py-3 text-center">Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach (var entry in entries)
+                        {
+                            bool missingWeight = entry.Eigewicht == null || entry.Koerpergewicht == null;
+                            <tr class="hover:bg-slate-50/50 transition-colors @(missingWeight ? "bg-amber-50/30" : "")">
+                                <td class="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">@entry.Date.ToShortDateString()</td>
+                                <td class="px-4 py-3 text-slate-600">@entry.Stall?.Name</td>
+                                <td class="px-4 py-3">
+                                    @if (entry.Status == EntryStatus.Freigegeben)
+                                    {
+                                        <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">✓ Freigegeben</span>
+                                    }
+                                    else if (entry.Status == EntryStatus.WartetAufFreigabe)
+                                    {
+                                        <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">⏳ Ausstehend</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">Entwurf</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-3 text-right tabular-nums text-slate-700">@(entry.Eier1Wahl + entry.Eier2Wahl)</td>
+                                <td class="px-4 py-3 text-center tabular-nums">
+                                    @if (entry.Eigewicht.HasValue)
+                                    {
+                                        <span class="text-slate-700">@entry.Eigewicht.Value.ToString("N1") g</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-amber-500 font-medium">–</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-3 text-center tabular-nums">
+                                    @if (entry.Koerpergewicht.HasValue)
+                                    {
+                                        <span class="text-slate-700">@entry.Koerpergewicht.Value.ToString("N1") g</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-amber-500 font-medium">–</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (entry.Status != EntryStatus.Freigegeben && (currentUser == null || !currentUser.IsInRole("Praktikant")))
+                                    {
+                                         <button class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                                             @onclick="() => OpenEditModal(entry)">
+                                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                             </svg>
+                                             Bearbeiten
+                                         </button>
+                                     }
+                                     else if (entry.Status == EntryStatus.Freigegeben)
+                                     {
+                                        <div class="flex flex-col items-center text-slate-400 group relative" title="Freigegebene Einträge können nicht mehr bearbeitet werden">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                            </svg>
+                                            <span class="text-[10px] mt-0.5 font-medium uppercase">Gesperrt</span>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Gewichte-Nachtragen Modal -->
+@if (editingEntry != null)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="w-full max-w-sm rounded-xl bg-white shadow-2xl overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Eintrag bearbeiten</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">@editingEntry.Date.ToShortDateString() – @editingEntry.Stall?.Name</p>
+                </div>
+                <button @onclick="() => editingEntry = null" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[70vh] space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eier 1. Wahl</label>
+                        <input type="number" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editEier1" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eier 2. Wahl</label>
+                        <input type="number" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editEier2" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Futter (kg)</label>
+                        <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editFutter" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Wasser (l)</label>
+                        <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editWasser" />
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Futterlieferung (optional, in kg)</label>
+                    <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 border-blue-200 bg-blue-50/30" @bind="editFutterlieferung" />
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Verluste</label>
+                    <input type="number" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-500/20" @bind="editVerluste" />
+                </div>
+
+                <div class="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eigewicht (g)</label>
+                        <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editEigewicht" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Körpergewicht (g)</label>
+                        <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editKoerpergewicht" />
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(saveMessage))
+                {
+                    <div class="rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-xs text-red-700">@saveMessage</div>
+                }
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                    @onclick="() => editingEntry = null">
+                    Abbrechen
+                </button>
+                <button class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
+                    @onclick="SaveEntry">
+                    Speichern
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<DailyEntry> entries = new();
+    private List<Stall> stalls = new();
+    private int selectedStallId = 0;
+    private DailyEntry? editingEntry = null;
+    private int editEier1;
+    private int editEier2;
+    private decimal editFutter;
+    private decimal editWasser;
+    private decimal? editFutterlieferung;
+    private int editVerluste;
+    private decimal? editEigewicht;
+    private decimal? editKoerpergewicht;
+    private string saveMessage = "";
+    private ClaimsPrincipal? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+        
+        using var context = await DbFactory.CreateDbContextAsync();
+        stalls = await context.Stalls.OrderBy(s => s.Name).ToListAsync();
+        
+        await LoadEntriesAsync();
+    }
+
+    private async Task LoadEntriesAsync()
+    {
+        entries = await EntryService.GetRecentEntriesAsync(stallId: selectedStallId);
+    }
+
+    private void OpenEditModal(DailyEntry entry)
+    {
+        editingEntry = entry;
+        editEier1 = entry.Eier1Wahl;
+        editEier2 = entry.Eier2Wahl;
+        editFutter = entry.FutterKg;
+        editWasser = entry.WasserLiter;
+        editFutterlieferung = entry.FutterlieferungKg;
+        editVerluste = entry.Verluste;
+        editEigewicht = entry.Eigewicht;
+        editKoerpergewicht = entry.Koerpergewicht;
+        saveMessage = "";
+    }
+
+    private async Task SaveEntry()
+    {
+        if (editingEntry == null || currentUser == null) return;
+
+        saveMessage = "";
+        
+        // Temporäres Objekt für den Update-Call
+        var updatedData = new DailyEntry
+        {
+            Id = editingEntry.Id,
+            Eier1Wahl = editEier1,
+            Eier2Wahl = editEier2,
+            FutterKg = editFutter,
+            WasserLiter = editWasser,
+            FutterlieferungKg = editFutterlieferung,
+            Verluste = editVerluste,
+            Eigewicht = editEigewicht,
+            Koerpergewicht = editKoerpergewicht,
+            Bemerkungen = editingEntry.Bemerkungen
+        };
+
+        await EntryService.UpdateEntryAsync(updatedData, currentUser);
+
+        editingEntry = null;
+        await LoadEntriesAsync();
+    }
+}

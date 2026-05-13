@@ -1,0 +1,674 @@
+@page "/admin"
+@using LegelisteApp.Data
+@using LegelisteApp.Data.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+@attribute [Authorize(Roles = "Admin")]
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject LegelisteApp.Services.ExportService ExportService
+@inject LegelisteApp.Services.FlockCalculationService CalcService
+@inject LegelisteApp.Services.PerformanceNormService NormService
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard - LegelisteApp</PageTitle>
+
+<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div class="flex h-16 items-center justify-between px-6">
+        <div>
+            <h1 class="text-lg font-semibold text-slate-900">Dashboard</h1>
+            <p class="text-sm text-slate-500">Übersicht aller Stalldaten</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-slate-500">Letzte Aktualisierung: @DateTime.Now.ToString("HH:mm") Uhr</span>
+        </div>
+    </div>
+</header>
+
+<div class="space-y-6 p-6">
+    <!-- View Switcher (Subtabs) -->
+    <div class="flex gap-2 p-1 bg-slate-100 rounded-lg w-fit">
+        <button class="px-4 py-1.5 text-sm font-medium rounded-md transition-all @(statsSubTab == 1 ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700")" @onclick="() => SetStatsSubTab(1)">
+            🏢 Gesamtbetrieb
+        </button>
+        <button class="px-4 py-1.5 text-sm font-medium rounded-md transition-all @(statsSubTab == 2 ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700")" @onclick="() => SetStatsSubTab(2)">
+            🏠 Stall-Detail
+        </button>
+    </div>
+
+    @if (statsSubTab == 1)
+    {
+        var totalBestand = stallStats.Sum(s => s.AktuellLebend);
+        var totalVerluste = stallStats.Sum(s => s.Verluste);
+        var todayEggs = allHistoryEntries.Where(e => e.Date.Date == DateTime.Today).Sum(e => e.Eier1Wahl + e.Eier2Wahl);
+        var avgLay = stallStats.Count > 0 && totalBestand > 0 ? CalcService.CalculateLayingPerformance(todayEggs, totalBestand) : 0m;
+        var verlustPctTotal = stallStats.Sum(s => s.Anfangsbestand) > 0 ? (double)totalVerluste / stallStats.Sum(s => s.Anfangsbestand) * 100 : 0;
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded-xl border border-slate-200/50 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between pb-2">
+                    <h3 class="text-sm font-medium text-slate-500">Gesamtbestand</h3>
+                    <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m0 0V19a2 2 0 01-2 2H5a2 2 0 01-2-2v-5"/></svg>
+                </div>
+                <div class="text-2xl font-bold tracking-tight text-slate-900">@totalBestand.ToString("N0")</div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200/50 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between pb-2">
+                    <h3 class="text-sm font-medium text-slate-500">Gesamtverluste</h3>
+                    <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                </div>
+                <div class="text-2xl font-bold tracking-tight @(verlustPctTotal > 1 ? "text-red-600" : "text-slate-900")">@totalVerluste</div>
+                <div class="mt-1 flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium @(verlustPctTotal > 1 ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-700")">@verlustPctTotal.ToString("0.##")%</span>
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200/50 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between pb-2">
+                    <h3 class="text-sm font-medium text-slate-500">Eier heute</h3>
+                    <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="11" stroke-width="2"/><ellipse cx="12" cy="10" rx="3" ry="4" stroke-width="2"/></svg>
+                </div>
+                <div class="text-2xl font-bold tracking-tight text-slate-900">@todayEggs.ToString("N0")</div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200/50 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between pb-2">
+                    <h3 class="text-sm font-medium text-slate-500">Ø Legeleistung</h3>
+                    <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                </div>
+                <div class="text-2xl font-bold tracking-tight @(avgLay < 85 ? "text-amber-600" : "text-slate-900")">@avgLay.ToString("0.##")%</div>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/50 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-100 px-6 py-4">
+                <h3 class="text-base font-semibold text-slate-900">Futter- & Wasserverbrauch</h3>
+                <p class="text-sm text-slate-500">Letzte 7 Tage</p>
+            </div>
+            <div class="p-4 sm:p-6 h-[250px] sm:h-[300px]">
+                <canvas id="consumptionChart"></canvas>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="mb-6 flex items-center gap-4">
+            <label class="text-sm font-medium text-slate-700">Stall wählen:</label>
+            <select class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500/20 outline-none" @bind="detailStallId">
+                <option value="0">Bitte wählen...</option>
+                @foreach (var s in allStalls) { <option value="@s.Id">@s.Name</option> }
+            </select>
+        </div>
+
+        @if (detailStallId > 0)
+        {
+            var ds = stallStats.FirstOrDefault(s => allStalls.Any(st => st.Id == detailStallId && st.Name == s.StallName));
+            var dsStall = allStalls.FirstOrDefault(s => s.Id == detailStallId);
+            var dsEntries = allHistoryEntries.Where(e => e.StallId == detailStallId).OrderByDescending(e => e.Date).ToList();
+            var dsVerlustPct = ds != null && ds.Anfangsbestand > 0 ? (double)ds.Verluste / ds.Anfangsbestand * 100 : 0;
+            var dsTodayEggs = dsEntries.Where(e => e.Date.Date == DateTime.Today).Sum(e => e.Eier1Wahl + e.Eier2Wahl);
+            
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="rounded-xl border border-slate-200/50 bg-white p-5 shadow-sm">
+                    <h3 class="text-sm font-medium text-slate-500 pb-2">Aktuell lebend</h3>
+                    <div class="text-2xl font-bold text-slate-900">@(ds?.AktuellLebend.ToString("N0") ?? "0")</div>
+                </div>
+                <div class="rounded-xl border border-slate-200/50 bg-white p-5 shadow-sm">
+                    <h3 class="text-sm font-medium text-slate-500 pb-2">Verluste</h3>
+                    <div class="text-2xl font-bold @(dsVerlustPct > 1 ? "text-red-600" : "text-slate-900")">@(ds?.Verluste ?? 0) (@dsVerlustPct.ToString("0.##")%)</div>
+                </div>
+                <div class="rounded-xl border border-slate-200/50 bg-white p-5 shadow-sm">
+                    <h3 class="text-sm font-medium text-slate-500 pb-2">Eier heute</h3>
+                    <div class="text-2xl font-bold text-slate-900">@dsTodayEggs.ToString("N0")</div>
+                </div>
+                @if (dsStall != null) {
+                    <div class="rounded-xl border border-slate-200/50 bg-white p-5 shadow-sm">
+                        <h3 class="text-sm font-medium text-slate-500 pb-2">Herdenalter</h3>
+                        <div class="text-xl font-bold text-slate-700">@CalcService.GetFlockAge(dsStall.Einstallungsdatum, DateTime.Today)</div>
+                    </div>
+                }
+            </div>
+
+        }
+    }
+
+    @if (pendingEntries.Any())
+    {
+        <div class="rounded-xl border border-amber-200 bg-amber-50 shadow-sm overflow-hidden">
+            <div class="border-b border-amber-100 px-6 py-4 bg-amber-100/50 flex justify-between items-center">
+                <h3 class="text-base font-semibold text-amber-900">Offene Freigaben (@pendingEntries.Count)</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-amber-100/30 text-amber-900 border-b border-amber-200">
+                        <tr>
+                            <th class="px-4 py-3 font-medium">Datum</th>
+                            <th class="px-4 py-3 font-medium">Stall</th>
+                            <th class="px-4 py-3 font-medium text-center">Verluste</th>
+                            <th class="px-4 py-3 font-medium text-center">Zugänge</th>
+                            <th class="px-4 py-3 font-medium text-center">Eier 1.W</th>
+                            <th class="px-4 py-3 font-medium text-center">Eier 2.W</th>
+                            <th class="px-4 py-3 font-medium text-center">Futter (kg)</th>
+                            <th class="px-4 py-3 font-medium text-center">Wasser (L)</th>
+                            <th class="px-4 py-3 font-medium">Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-amber-100">
+                        @foreach (var entry in pendingEntries) {
+                            <tr class="hover:bg-amber-100/20 transition-colors">
+                                <td class="px-4 py-3 font-medium">@entry.Date.ToShortDateString()</td>
+                                <td class="px-4 py-3">@entry.Stall?.Name</td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.Verluste" /> }
+                                    else { <span>@entry.Verluste</span> }
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.ZugaengeTiere" /> }
+                                    else { <span>@(entry.ZugaengeTiere ?? 0)</span> }
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.Eier1Wahl" /> }
+                                    else { <span>@entry.Eier1Wahl</span> }
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.Eier2Wahl" /> }
+                                    else { <span>@entry.Eier2Wahl</span> }
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <div class="flex flex-col items-center">
+                                        @if (isAdmin) { <input type="number" step="0.1" class="w-20 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.FutterKg" /> }
+                                        else { <span>@entry.FutterKg.ToString("N1")</span> }
+                                        @if (entry.FutterlieferungKg.HasValue)
+                                        {
+                                            <span class="text-[10px] text-blue-600 font-bold flex items-center gap-0.5 mt-0.5" title="Futterlieferung">
+                                                🚚 @entry.FutterlieferungKg.Value.ToString("N0")
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (isAdmin) { <input type="number" step="0.1" class="w-20 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.WasserLiter" /> }
+                                    else { <span>@entry.WasserLiter.ToString("N1")</span> }
+                                </td>
+                                <td class="px-4 py-3">
+                                    @if (isAdmin)
+                                    {
+                                        <button class="bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-700 shadow-sm transition-all" @onclick="() => ApproveEntry(entry)">
+                                            Freigeben
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <div class="rounded-xl border border-slate-200/50 bg-white shadow-sm">
+        <div class="border-b border-slate-100 px-6 py-4 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <h3 class="text-base font-semibold text-slate-900">Historie (Freigegebene Einträge)</h3>
+            @if (isAdmin)
+            {
+                <button class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700" @onclick="ExportLast7Days">Export (Excel)</button>
+            }
+        </div>
+        
+        <div class="p-4 bg-slate-50 border-b border-slate-100 flex flex-wrap gap-4 items-end">
+            <select class="block rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700" @bind="filterStallId" @bind:after="ApplyFilter">
+                <option value="0">Alle Ställe</option>
+                @foreach (var s in allStalls) { <option value="@s.Id">@s.Name</option> }
+            </select>
+            <input type="date" class="block rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700" @bind="filterFrom" @bind:after="ApplyFilter" />
+            <input type="date" class="block rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700" @bind="filterTo" @bind:after="ApplyFilter" />
+            <button class="text-xs font-medium text-slate-500 hover:text-slate-900" @onclick="ResetFilter">Reset</button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="bg-slate-50/80 text-slate-500 border-b border-slate-200">
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider">Datum</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider">Stall</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider hidden md:table-cell">Erfasser</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider hidden lg:table-cell">Freigegeben</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-center">Alter</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-right">Verluste</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-right">Ges. Eier</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-right">Leistung</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-right hidden sm:table-cell">Futter/T</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-right">Futter</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-right">Wasser</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider hidden xl:table-cell">Bemerkung</th>
+                        <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-center">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach (var entry in historyEntries)
+                    {
+                        var pastChangesH = allHistoryEntries.Where(e => e.StallId == entry.StallId && e.Date <= entry.Date).Sum(e => e.Verluste - (e.ZugaengeTiere ?? 0));
+                        var flockSizeH = entry.Stall != null ? entry.Stall.AnfangsbestandTiere - (pastChangesH - (entry.Verluste - (entry.ZugaengeTiere ?? 0))) : 0; 
+                        var currentFlockSize = flockSizeH - (entry.Verluste - (entry.ZugaengeTiere ?? 0)); 
+                        
+                        var eggsH = entry.Eier1Wahl + entry.Eier2Wahl;
+                        var layH = CalcService.CalculateLayingPerformance(eggsH, flockSizeH);
+                        var feedH = CalcService.CalculateFeedPerBird(entry.FutterKg, flockSizeH);
+                        var ageWeeks = entry.Stall != null ? (entry.Date - entry.Stall.Einstallungsdatum).Days / 7 + 1 : 0;
+                        
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-3 py-3 font-medium text-slate-900 whitespace-nowrap">@entry.Date.ToShortDateString()</td>
+                            <td class="px-3 py-3 text-slate-600 whitespace-nowrap font-semibold">@entry.Stall?.Name</td>
+                            <td class="px-3 py-3 text-slate-500 text-xs hidden md:table-cell">@entry.Creator?.Username</td>
+                            <td class="px-3 py-3 text-slate-500 text-xs hidden lg:table-cell">@entry.ApprovedBy?.Username</td>
+                            <td class="px-3 py-3 text-center text-slate-600 tabular-nums">@ageWeeks</td>
+                            <td class="px-3 py-3 text-right tabular-nums">
+                                <div class="flex flex-col items-end">
+                                     <span class="@(entry.Verluste > 0 ? "text-amber-600 font-medium" : "text-slate-400")">@entry.Verluste</span>
+                                     @if (entry.ZugaengeTiere > 0)
+                                     {
+                                         <span class="text-[10px] text-emerald-600 font-bold">+@entry.ZugaengeTiere</span>
+                                     }
+                                </div>
+                            </td>
+                            <td class="px-3 py-3 text-right tabular-nums text-slate-900 font-medium">@eggsH.ToString("N0")</td>
+                            <td class="px-3 py-3 text-right tabular-nums font-bold @(layH < 90 ? "text-amber-600" : "text-emerald-600")">@layH.ToString("0.##")%</td>
+                            <td class="px-3 py-3 text-right tabular-nums text-slate-600 hidden sm:table-cell">@feedH.ToString("0.##")g</td>
+                            <td class="px-3 py-3 text-right tabular-nums text-slate-600">
+                                <div class="flex flex-col items-end">
+                                    <span>@entry.FutterKg.ToString("N1")kg</span>
+                                    @if (entry.FutterlieferungKg.HasValue)
+                                    {
+                                        <span class="text-[9px] text-blue-600 font-bold bg-blue-50 px-1 rounded flex items-center gap-0.5 mt-0.5" title="Futterlieferung">
+                                            🚚 @entry.FutterlieferungKg.Value.ToString("N0")
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="px-3 py-3 text-right tabular-nums text-slate-600">@entry.WasserLiter.ToString("N1")L</td>
+                            <td class="px-3 py-3 text-slate-400 text-xs italic truncate max-w-[100px] hidden xl:table-cell" title="@entry.Bemerkungen">@(string.IsNullOrEmpty(entry.Bemerkungen) ? "-" : entry.Bemerkungen)</td>
+                            <td class="px-3 py-3">
+                                @if (isAdmin)
+                                {
+                                    <div class="flex justify-center gap-1">
+                                        <button class="p-1 text-slate-400 hover:text-blue-600 transition-colors" @onclick="() => StartEdit(entry)">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        </button>
+                                        <button class="p-1 text-slate-400 hover:text-red-600 transition-colors" @onclick="() => AskDelete(entry.Id)">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (editingEntry != null)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="w-full max-w-lg rounded-xl bg-white shadow-2xl overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-900">Eintrag bearbeiten</h3>
+                <button @onclick="() => editingEntry = null" class="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Eier 1. Wahl</label>
+                        <input type="number" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.Eier1Wahl" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Futter (kg)</label>
+                        <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.FutterKg" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Wasser (L)</label>
+                        <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.WasserLiter" />
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Futterlieferung (kg)</label>
+                    <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.FutterlieferungKg" placeholder="Optional" />
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Bemerkungen</label>
+                    <textarea class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" rows="3" @bind="editingEntry.Bemerkungen"></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button class="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900" @onclick="() => editingEntry = null">Abbrechen</button>
+                <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" @onclick="SaveEdit">Speichern</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showDeleteConfirm)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="w-full max-w-sm rounded-xl bg-white shadow-2xl p-6 text-center border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Eintrag löschen?</h3>
+            <p class="text-sm text-slate-500 mb-6">Möchten Sie diesen Eintrag wirklich permanent löschen?</p>
+            <div class="flex gap-3">
+                <button class="flex-1 px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200" @onclick="() => showDeleteConfirm = false">Abbrechen</button>
+                <button class="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700" @onclick="ConfirmDelete">Löschen</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private int activeTab = 1;
+    private int statsSubTab = 1; // 1=Gesamtbetrieb, 2=Stall-Detail
+    private int currentUserId = 0;
+    private bool isAdmin = false;
+
+    private List<DailyEntry> pendingEntries = new();
+    private List<DailyEntry> historyEntries = new();
+    private List<DailyEntry> allHistoryEntries = new();
+    private List<StallStatistic> stallStats = new();
+    private List<Stall> allStalls = new();
+    private bool isExporting = false;
+    private string exportMessage = "";
+
+    // Filter-State (Historie)
+    private int filterStallId = 0;
+    private DateTime filterFrom = DateTime.Today.AddDays(-30);
+    private DateTime filterTo = DateTime.Today;
+
+    // Statistik Stall-Detail
+    private int detailStallId = 0;
+
+    // Edit/Delete
+    private DailyEntry? editingEntry = null;
+    private bool showDeleteConfirm = false;
+    private int deleteEntryId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isAdmin = user.IsInRole("Admin");
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+            if (idClaim != null && int.TryParse(idClaim.Value, out int id))
+            {
+                currentUserId = id;
+            }
+        }
+
+        await LoadDataAsync();
+    }
+
+    private void SetTab(int tabIndex)
+    {
+        activeTab = tabIndex;
+        if (tabIndex == 2)
+        {
+            // Kurze Verzögerung, damit das DOM für Chart.js bereit ist
+            Task.Run(async () => {
+                await Task.Delay(100);
+                await UpdateChart();
+            });
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+
+        allStalls = await context.Stalls.AsNoTracking().OrderBy(s => s.Name).ToListAsync();
+
+        // Offene Freigaben
+        pendingEntries = await context.DailyEntries
+            .Include(e => e.Stall)
+            .Include(e => e.Creator)
+            .Where(e => e.Status == EntryStatus.WartetAufFreigabe)
+            .OrderBy(e => e.Date)
+            .ToListAsync();
+
+        // Alle freigegebenen Einträge für Berechnungen
+        allHistoryEntries = await context.DailyEntries
+            .Include(e => e.Stall)
+            .Include(e => e.Creator)
+            .Include(e => e.ApprovedBy)
+            .Where(e => e.Status == EntryStatus.Freigegeben)
+            .OrderByDescending(e => e.Date)
+            .AsNoTracking()
+            .ToListAsync();
+
+        ApplyFilter();
+
+        // Statistiken
+        stallStats.Clear();
+        foreach (var stall in allStalls)
+        {
+            var netChanges = allHistoryEntries
+                .Where(e => e.StallId == stall.Id)
+                .Sum(e => e.Verluste - (e.ZugaengeTiere ?? 0));
+
+            stallStats.Add(new StallStatistic
+            {
+                StallName = stall.Name,
+                Anfangsbestand = stall.AnfangsbestandTiere,
+                Verluste = allHistoryEntries.Where(e => e.StallId == stall.Id).Sum(e => e.Verluste),
+                AktuellLebend = stall.AnfangsbestandTiere - netChanges
+            });
+        }
+
+        // Chart wird jetzt in OnAfterRenderAsync oder beim Tab-Wechsel initialisiert
+    }
+
+    private async Task SetStatsSubTab(int tab)
+    {
+        statsSubTab = tab;
+        if (tab == 1)
+        {
+            await Task.Delay(50);
+            await UpdateChart();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && statsSubTab == 1)
+        {
+            await UpdateChart();
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        historyEntries = allHistoryEntries
+            .Where(e =>
+                (filterStallId == 0 || e.StallId == filterStallId) &&
+                e.Date.Date >= filterFrom.Date &&
+                e.Date.Date <= filterTo.Date)
+            .ToList();
+        StateHasChanged();
+    }
+
+    private void ResetFilter()
+    {
+        filterStallId = 0;
+        filterFrom = DateTime.Today.AddDays(-30);
+        filterTo = DateTime.Today;
+        ApplyFilter();
+    }
+
+    private void StartEdit(DailyEntry entry)
+    {
+        // Erstelle eine Kopie damit Abbrechen kein Problem macht
+        editingEntry = new DailyEntry
+        {
+            Id = entry.Id, Date = entry.Date, StallId = entry.StallId,
+            Stall = entry.Stall, Verluste = entry.Verluste,
+            ZugaengeTiere = entry.ZugaengeTiere,
+            Eier1Wahl = entry.Eier1Wahl, Eier2Wahl = entry.Eier2Wahl,
+            FutterKg = entry.FutterKg, WasserLiter = entry.WasserLiter,
+            FutterlieferungKg = entry.FutterlieferungKg,
+            Bemerkungen = entry.Bemerkungen
+        };
+    }
+
+    private async Task SaveEdit()
+    {
+        if (editingEntry == null) return;
+        using var context = await DbFactory.CreateDbContextAsync();
+        var dbEntry = await context.DailyEntries.FindAsync(editingEntry.Id);
+        if (dbEntry != null)
+        {
+            dbEntry.Verluste = editingEntry.Verluste;
+            dbEntry.Eier1Wahl = editingEntry.Eier1Wahl;
+            dbEntry.Eier2Wahl = editingEntry.Eier2Wahl;
+            dbEntry.FutterKg = editingEntry.FutterKg;
+            dbEntry.WasserLiter = editingEntry.WasserLiter;
+            dbEntry.FutterlieferungKg = editingEntry.FutterlieferungKg;
+            dbEntry.ZugaengeTiere = editingEntry.ZugaengeTiere;
+            dbEntry.Bemerkungen = editingEntry.Bemerkungen;
+            await context.SaveChangesAsync();
+        }
+        editingEntry = null;
+        await LoadDataAsync();
+    }
+
+    private void AskDelete(int id)
+    {
+        deleteEntryId = id;
+        showDeleteConfirm = true;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        showDeleteConfirm = false;
+        using var context = await DbFactory.CreateDbContextAsync();
+        var entry = await context.DailyEntries.FindAsync(deleteEntryId);
+        if (entry != null)
+        {
+            context.DailyEntries.Remove(entry);
+            await context.SaveChangesAsync();
+        }
+        await LoadDataAsync();
+    }
+
+    private async Task UpdateChart()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        var sevenDaysAgo = DateTime.Today.AddDays(-7);
+        
+        var recentEntries = await context.DailyEntries
+            .Where(e => e.Status == EntryStatus.Freigegeben && e.Date >= sevenDaysAgo)
+            .OrderBy(e => e.Date)
+            .ToListAsync();
+
+        // Gruppierung nach Datum (Summe über alle Ställe pro Tag)
+        var groupedData = recentEntries
+            .GroupBy(e => e.Date.Date)
+            .Select(g => new {
+                Date = g.Key.ToShortDateString(),
+                Food = g.Sum(e => e.FutterKg),
+                Water = g.Sum(e => e.WasserLiter)
+            })
+            .ToList();
+
+        var labels = groupedData.Select(d => d.Date).ToArray();
+        var foodValues = groupedData.Select(d => d.Food).ToArray();
+        var waterValues = groupedData.Select(d => d.Water).ToArray();
+
+        await JS.InvokeVoidAsync("renderConsumptionChart", "consumptionChart", labels, foodValues, waterValues);
+    }
+
+    private async Task ApproveEntry(DailyEntry entry)
+    {
+        if (currentUserId == 0) return;
+
+        using var context = await DbFactory.CreateDbContextAsync();
+        
+        // Da 'entry' aus einer vorherigen Context-Instanz stammt, müssen wir es attachen oder neu laden
+        var dbEntry = await context.DailyEntries.FindAsync(entry.Id);
+        if (dbEntry != null)
+        {
+            // Übernehme evtl. vorgenommene Änderungen durch den Admin aus dem UI-Binding
+            dbEntry.Verluste = entry.Verluste;
+            dbEntry.ZugaengeTiere = entry.ZugaengeTiere;
+            dbEntry.FutterKg = entry.FutterKg;
+            dbEntry.WasserLiter = entry.WasserLiter;
+            dbEntry.Eier1Wahl = entry.Eier1Wahl;
+            dbEntry.Eier2Wahl = entry.Eier2Wahl;
+            dbEntry.FutterlieferungKg = entry.FutterlieferungKg;
+
+            // Status ändern & Freigeber setzen
+            dbEntry.Status = EntryStatus.Freigegeben;
+            dbEntry.ApprovedById = currentUserId;
+
+            await context.SaveChangesAsync();
+
+            // Nach dem Speichern Daten neu laden, um die UI (Tabs) zu aktualisieren
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task ExportLast7Days()
+    {
+        isExporting = true;
+        exportMessage = "";
+        
+        try
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+            var entriesToExport = await context.DailyEntries
+                .Include(e => e.Stall)
+                .Where(e => e.Status == EntryStatus.Freigegeben)
+                .OrderBy(e => e.StallId)
+                .ThenBy(e => e.Date)
+                .ToListAsync();
+
+            if (entriesToExport.Count == 0)
+            {
+                exportMessage = "Keine freigegebenen Einträge vorhanden.";
+                return;
+            }
+
+            var excelData = await ExportService.GenerateExcelAsync(entriesToExport);
+            
+            using var stream = new MemoryStream(excelData);
+            using var streamRef = new DotNetStreamReference(stream);
+
+            var kw = System.Globalization.ISOWeek.GetWeekOfYear(DateTime.Today);
+            var year = DateTime.Today.Year;
+            var fileName = $"Legeliste_Novogen_{year}_KW{kw}.xlsx";
+
+            // JS-Interop aufrufen
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+        }
+        catch (Exception ex)
+        {
+            exportMessage = $"Fehler beim Export: {ex.Message}";
+        }
+        finally
+        {
+            isExporting = false;
+        }
+    }
+
+    public class StallStatistic
+    {
+        public string StallName { get; set; } = "";
+        public int Anfangsbestand { get; set; }
+        public int Verluste { get; set; }
+        public int AktuellLebend { get; set; }
+    }
+}

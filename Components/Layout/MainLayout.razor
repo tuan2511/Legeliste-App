@@ -1,0 +1,36 @@
+@inherits LayoutComponentBase
+
+<NavMenu />
+
+<main class="transition-all duration-300 lg:pl-64 min-h-screen">
+    <!-- Mobile Top Bar -->
+    <div class="lg:hidden flex h-14 items-center border-b border-slate-200 bg-white/95 backdrop-blur sticky top-0 z-30 px-4 gap-3">
+        <button onclick="window.toggleMobileMenu(true)"
+            class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+        <div class="flex items-center gap-2">
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600">
+                <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <ellipse cx="12" cy="12" rx="9" ry="11" stroke-width="2"/>
+                    <ellipse cx="12" cy="10" rx="3" ry="4" stroke-width="2"/>
+                </svg>
+            </div>
+            <span class="text-base font-semibold text-slate-900">LegelisteApp</span>
+        </div>
+    </div>
+    @Body
+</main>
+
+<!-- Mobile Overlay -->
+<div id="mobile-overlay" onclick="window.toggleMobileMenu(false)"
+    class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden hidden">
+</div>
+
+<div id="blazor-error-ui" data-nosnippet class="fixed bottom-0 left-0 right-0 z-[9999] bg-red-100 border-t border-red-300 p-3 text-center text-sm text-red-800 hidden">
+    An unhandled error has occurred.
+    <a href="." class="underline font-medium">Reload</a>
+    <span class="dismiss cursor-pointer ml-4">🗙</span>
+</div>

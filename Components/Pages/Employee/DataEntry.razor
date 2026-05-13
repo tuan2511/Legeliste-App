@@ -1,0 +1,471 @@
+@page "/datenerfassung"
+@using LegelisteApp.Data
+@using LegelisteApp.Data.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+@attribute [Authorize(Roles = "Admin, Mitarbeiter")]
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Dateneingabe - LegelisteApp</PageTitle>
+
+<!-- Header -->
+<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div class="flex h-16 items-center justify-between px-6">
+        <div>
+            <h1 class="text-lg font-semibold text-slate-900">Dateneingabe</h1>
+            <p class="text-sm text-slate-500">Tägliche Erfassung der Stalldaten</p>
+        </div>
+        <span class="text-sm text-slate-500">Heute: @DateTime.Today.ToString("dd. MMMM yyyy")</span>
+    </div>
+</header>
+
+<div class="mx-auto max-w-2xl px-6 py-8">
+    @if (isSuccess)
+    {
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
+            <svg class="mx-auto h-12 w-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <h3 class="mt-3 text-lg font-semibold text-emerald-900">Gespeichert!</h3>
+            <p class="mt-1 text-sm text-emerald-700">Der Tageseintrag wurde erfolgreich gespeichert und wartet auf Freigabe.</p>
+            <button class="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700" @onclick="ResetWizard">Neuen Eintrag erfassen</button>
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                <strong>Fehler:</strong> @errorMessage
+            </div>
+        }
+
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="mb-4 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                <div class="progress-bar h-full rounded-full bg-blue-600" style="width: @(currentStep * 25)%"></div>
+            </div>
+            <div class="flex justify-between">
+                @for (int i = 1; i <= 4; i++)
+                {
+                    var step = i;
+                    var isCompleted = step < currentStep;
+                    var isCurrent = step == currentStep;
+                    <div class="flex flex-col items-center">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium @(isCurrent || isCompleted ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-500")">
+                            @if (isCompleted)
+                            {
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            }
+                            else
+                            {
+                                @step
+                            }
+                        </div>
+                        <span class="mt-2 hidden text-xs font-medium sm:block @(isCurrent ? "text-slate-900" : isCompleted ? "text-blue-600" : "text-slate-500")">
+                            @(step switch { 1 => "Grunddaten", 2 => "Datenerfassung", 3 => "Zusatzdaten", _ => "Zusammenfassung" })
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (missingPreviousDayData && currentStep > 1)
+        {
+            <div class="mb-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                <svg class="h-5 w-5 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span><strong>Achtung!</strong> Folgende Daten fehlen vom Vortag.</span>
+            </div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="SubmitData">
+            <DataAnnotationsValidator />
+
+            <div class="rounded-xl border border-slate-200/50 bg-white shadow-sm">
+                @switch (currentStep)
+                {
+                    case 1:
+                        <div class="border-b border-slate-100 px-6 py-4">
+                            <h2 class="text-lg font-semibold text-slate-900">Grunddaten</h2>
+                            <p class="text-sm text-slate-500">Datum und Stall</p>
+                        </div>
+                        <div class="space-y-6 p-6">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-slate-700">Datum</label>
+                                <InputDate @bind-Value="model.Date" max="@DateTime.Today.ToString("yyyy-MM-dd")" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                <p class="text-[11px] leading-tight text-slate-500">
+                                    Die erfassten Daten (Futter, Wasser, Verluste) gelten für die 24 Stunden bis zu diesem Datum.
+                                </p>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-slate-700">Stall</label>
+                                <InputSelect @bind-Value="model.StallId" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                                    <option value="0">Stall auswählen...</option>
+                                    @foreach (var stall in stalls)
+                                    {
+                                        <option value="@stall.Id">@stall.Name</option>
+                                    }
+                                </InputSelect>
+                                @if (showStallError)
+                                {
+                                    <p class="text-xs text-red-500">Bitte wählen Sie einen Stall aus.</p>
+                                }
+                            </div>
+                        </div>
+                        break;
+
+                    case 2:
+                        <div class="border-b border-slate-100 px-6 py-4">
+                            <h2 class="text-lg font-semibold text-slate-900">Datenerfassung</h2>
+                            <p class="text-sm text-slate-500">Verluste, Eier, Futter, Wasser</p>
+                        </div>
+                        <div class="space-y-6 p-6">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-slate-700">Verluste</label>
+                                <InputNumber @bind-Value="model.Verluste" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                            </div>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-slate-700">Eier 1e Wahl</label>
+                                    <InputNumber @bind-Value="model.Eier1Wahl" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-slate-700">Eier 2e Wahl</label>
+                                    <InputNumber @bind-Value="model.Eier2Wahl" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-slate-700">Futterverbrauch (letzte 24h in kg)</label>
+                                    <InputNumber @bind-Value="model.FutterKg" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-slate-700">Wasserverbrauch (letzte 24h in Liter)</label>
+                                    <InputNumber @bind-Value="model.WasserLiter" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-slate-700">Futterlieferung erhalten? (optional, in kg)</label>
+                                <InputNumber @bind-Value="model.FutterlieferungKg" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="Nur ausfüllen bei neuer Lieferung" />
+                                <p class="text-[11px] leading-tight text-slate-500">
+                                    Nur ausfüllen, wenn heute neues Futter ins Silo geliefert wurde.
+                                </p>
+                            </div>
+                        </div>
+                        break;
+
+                    case 3:
+                        <div class="border-b border-slate-100 px-6 py-4">
+                            <h2 class="text-lg font-semibold text-slate-900">Zusatzdaten</h2>
+                            <p class="text-sm text-slate-500">Kontrollzeiten, Licht & mehr</p>
+                        </div>
+                        <div class="space-y-6 p-6">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-slate-700">Kontrollzeiten</label>
+                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div class="space-y-1.5">
+                                        <span class="text-xs text-slate-500">Von</span>
+                                        <InputText @bind-Value="model.KontrollzeitenVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 07:00" />
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <span class="text-xs text-slate-500">Bis</span>
+                                        <InputText @bind-Value="model.KontrollzeitenBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 16:00" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-slate-700">Bemerkungen</label>
+                                <InputTextArea @bind-Value="model.Bemerkungen" rows="3" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="Zusätzliche Notizen..." />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-slate-700">Auslaufzeit</label>
+                                <InputText @bind-Value="model.Auslaufzeit" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 8:00 - 18:00" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-slate-700">Licht</label>
+                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div class="space-y-1.5">
+                                        <span class="text-xs text-slate-500">Von</span>
+                                        <InputText @bind-Value="model.LichtVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 05:00" />
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <span class="text-xs text-slate-500">Bis</span>
+                                        <InputText @bind-Value="model.LichtBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 22:00" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-slate-700">Eigewicht (g)</label>
+                                    <InputNumber @bind-Value="model.Eigewicht" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-slate-700">Körpergewicht (g)</label>
+                                    <InputNumber @bind-Value="model.Koerpergewicht" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                </div>
+                            </div>
+                        </div>
+                        break;
+
+                    case 4:
+                        <div class="border-b border-slate-100 px-6 py-4">
+                            <h2 class="text-lg font-semibold text-slate-900">Zusammenfassung</h2>
+                            <p class="text-sm text-slate-500">Überprüfen & absenden</p>
+                        </div>
+                        <div class="space-y-4 p-6">
+                            <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+                                <h4 class="mb-3 text-sm font-medium text-slate-500">Grunddaten</h4>
+                                <dl class="grid gap-2 text-sm">
+                                    <div class="flex justify-between"><dt class="text-slate-500">Datum</dt><dd class="font-medium text-slate-900">@model.Date.ToShortDateString()</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Stall</dt><dd class="font-medium text-slate-900">@GetStallName(model.StallId)</dd></div>
+                                </dl>
+                            </div>
+                            <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+                                <h4 class="mb-3 text-sm font-medium text-slate-500">Datenerfassung</h4>
+                                <dl class="grid gap-2 text-sm">
+                                    <div class="flex justify-between"><dt class="text-slate-500">Verluste</dt><dd class="font-medium text-slate-900">@model.Verluste</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Eier 1e Wahl</dt><dd class="font-medium text-slate-900">@model.Eier1Wahl</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Eier 2e Wahl</dt><dd class="font-medium text-slate-900">@model.Eier2Wahl</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Futter</dt><dd class="font-medium text-slate-900">@model.FutterKg kg</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Wasser</dt><dd class="font-medium text-slate-900">@model.WasserLiter L</dd></div>
+                                    @if (model.FutterlieferungKg.HasValue)
+                                    {
+                                        <div class="mt-1 flex justify-between rounded bg-blue-50 px-2 py-1 text-blue-700">
+                                            <dt class="font-semibold text-blue-600">🚚 Futterlieferung</dt>
+                                            <dd class="font-bold">@model.FutterlieferungKg.Value.ToString("N0") kg</dd>
+                                        </div>
+                                    }
+                                </dl>
+                            </div>
+                            <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+                                <h4 class="mb-3 text-sm font-medium text-slate-500">Zusatzdaten</h4>
+                                <dl class="grid gap-2 text-sm">
+                                    <div class="flex justify-between"><dt class="text-slate-500">Kontrollzeiten</dt><dd class="font-medium text-slate-900">@(model.KontrollzeitenVon) - @(model.KontrollzeitenBis)</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Auslaufzeit</dt><dd class="font-medium text-slate-900">@(model.Auslaufzeit ?? "-")</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Licht</dt><dd class="font-medium text-slate-900">@(model.LichtVon) - @(model.LichtBis)</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Eigewicht</dt><dd class="font-medium text-slate-900">@(model.Eigewicht?.ToString() ?? "-") g</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Körpergewicht</dt><dd class="font-medium text-slate-900">@(model.Koerpergewicht?.ToString() ?? "-") g</dd></div>
+                                </dl>
+                            </div>
+                            <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                                <strong>Sind Sie sich sicher?</strong> Bitte prüfen Sie die Daten, bevor Sie diese zur Freigabe absenden.
+                            </div>
+                        </div>
+                        break;
+                }
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="mt-6 flex items-center justify-between">
+                <button type="button" disabled="@(currentStep == 1)" @onclick="PreviousStep"
+                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    Zurück
+                </button>
+                @if (currentStep < 4)
+                {
+                    <button type="button" @onclick="NextStep"
+                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700">
+                        Weiter
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                }
+                else
+                {
+                    <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Absenden
+                    </button>
+                }
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private int currentStep = 1;
+    private DailyEntry model = new();
+    private List<Stall> stalls = new();
+    private bool missingPreviousDayData = false;
+    private bool isSuccess = false;
+    private bool showStallError = false;
+    private bool entryAlreadyExists = false;
+    private int currentUserId = 0;
+    private string? errorMessage;
+
+    [SupplyParameterFromQuery]
+    public string? PreDate { get; set; }
+
+    [SupplyParameterFromQuery]
+    public int? PreStall { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInitialData();
+    }
+
+    private async Task LoadInitialData()
+    {
+        if (!string.IsNullOrEmpty(PreDate) && DateTime.TryParse(PreDate, out var preDate))
+        {
+            model.Date = preDate;
+        }
+        else if (DateTime.Now.Hour < 12)
+        {
+            model.Date = DateTime.Today.AddDays(-1);
+        }
+        else
+        {
+            model.Date = DateTime.Today;
+        }
+
+        if (PreStall.HasValue)
+        {
+            model.StallId = PreStall.Value;
+        }
+        
+        using var context = await DbFactory.CreateDbContextAsync();
+        stalls = await context.Stalls.OrderBy(s => s.Name).ToListAsync();
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+            if (idClaim != null && int.TryParse(idClaim.Value, out int id))
+            {
+                currentUserId = id;
+            }
+        }
+    }
+
+    private async Task NextStep()
+    {
+        if (currentStep == 1)
+        {
+            if (model.Date.Date > DateTime.Today)
+            {
+                errorMessage = "Datum darf nicht in der Zukunft liegen!";
+                return;
+            }
+
+            if (model.StallId == 0)
+            {
+                showStallError = true;
+                return;
+            }
+            showStallError = false;
+            
+            using var context = await DbFactory.CreateDbContextAsync();
+            entryAlreadyExists = await context.DailyEntries.AnyAsync(e => 
+                e.StallId == model.StallId && e.Date.Date == model.Date.Date);
+
+            if (entryAlreadyExists)
+            {
+                errorMessage = "Für diesen Stall und dieses Datum existiert bereits ein Eintrag.";
+                return;
+            }
+            errorMessage = null;
+            
+            await CheckPreviousDayData();
+        }
+
+        if (currentStep < 4)
+        {
+            currentStep++;
+        }
+    }
+
+    private void PreviousStep()
+    {
+        if (currentStep > 1)
+        {
+            currentStep--;
+        }
+    }
+
+    private async Task CheckPreviousDayData()
+    {
+        var previousDay = model.Date.AddDays(-1);
+        using var context = await DbFactory.CreateDbContextAsync();
+        
+        var exists = await context.DailyEntries.AnyAsync(e => 
+            e.StallId == model.StallId && 
+            e.Date.Date == previousDay.Date);
+            
+        missingPreviousDayData = !exists;
+    }
+
+    private async Task SubmitData()
+    {
+        errorMessage = null;
+
+        if (model.Date.Date > DateTime.Today)
+        {
+            errorMessage = "Datum darf nicht in der Zukunft liegen!";
+            return;
+        }
+
+        if (currentUserId == 0)
+        {
+            errorMessage = "Benutzer-ID konnte nicht ermittelt werden. Bitte loggen Sie sich erneut ein.";
+            return;
+        }
+
+        if (model.StallId == 0)
+        {
+            errorMessage = "Bitte wählen Sie einen Stall aus.";
+            return;
+        }
+
+        model.CreatorId = currentUserId;
+        model.Status = EntryStatus.WartetAufFreigabe;
+        model.Id = 0; 
+
+        try
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+            context.DailyEntries.Add(model);
+            await context.SaveChangesAsync();
+            isSuccess = true;
+        }
+        catch (DbUpdateException ex)
+        {
+            errorMessage = "Datenbankfehler beim Speichern (möglicherweise existiert bereits ein Eintrag für diesen Stall und Tag). Detail: " + (ex.InnerException?.Message ?? ex.Message);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Ein unerwarteter Fehler ist aufgetreten: " + ex.Message;
+        }
+    }
+
+    private void ResetWizard()
+    {
+        model = new DailyEntry();
+        if (DateTime.Now.Hour < 12)
+        {
+            model.Date = DateTime.Today.AddDays(-1);
+        }
+        else
+        {
+            model.Date = DateTime.Today;
+        }
+        currentStep = 1;
+        isSuccess = false;
+        missingPreviousDayData = false;
+    }
+
+    private string GetStallName(int stallId)
+    {
+        return stalls.FirstOrDefault(s => s.Id == stallId)?.Name ?? "Unbekannt";
+    }
+}
