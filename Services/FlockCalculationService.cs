@@ -5,12 +5,12 @@ public class FlockCalculationService
     public string GetFlockAge(DateTime einstellungsdatum, DateTime currentDate)
     {
         var age = currentDate.Date - einstellungsdatum.Date;
-        if (age.TotalDays < 0) return "0W 0T";
+        if (age.TotalDays < 0) return "18 Wochen und 0 Tage";
 
-        int weeks = (int)(age.TotalDays / 7);
+        int weeks = 18 + (int)(age.TotalDays / 7);
         int days = (int)(age.TotalDays % 7);
 
-        return $"{weeks}W {days}T";
+        return $"{weeks} Wochen und {days} Tage";
     }
 
     public decimal CalculateLayingPerformance(int totalEggs, int currentFlockSize)

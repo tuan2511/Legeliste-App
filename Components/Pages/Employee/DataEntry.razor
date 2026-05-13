@@ -171,11 +171,11 @@
                                 <label class="block text-sm font-medium text-slate-700">Kontrollzeiten</label>
                                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div class="space-y-1.5">
-                                        <span class="text-xs text-slate-500">Von</span>
+                                        <span class="text-xs text-slate-500">1. Kontrolle</span>
                                         <InputText @bind-Value="model.KontrollzeitenVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 07:00" />
                                     </div>
                                     <div class="space-y-1.5">
-                                        <span class="text-xs text-slate-500">Bis</span>
+                                        <span class="text-xs text-slate-500">2. Kontrolle</span>
                                         <InputText @bind-Value="model.KontrollzeitenBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 16:00" />
                                     </div>
                                 </div>
@@ -230,11 +230,11 @@
                             <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
                                 <h4 class="mb-3 text-sm font-medium text-slate-500">Datenerfassung</h4>
                                 <dl class="grid gap-2 text-sm">
-                                    <div class="flex justify-between"><dt class="text-slate-500">Verluste</dt><dd class="font-medium text-slate-900">@model.Verluste</dd></div>
-                                    <div class="flex justify-between"><dt class="text-slate-500">Eier 1e Wahl</dt><dd class="font-medium text-slate-900">@model.Eier1Wahl</dd></div>
-                                    <div class="flex justify-between"><dt class="text-slate-500">Eier 2e Wahl</dt><dd class="font-medium text-slate-900">@model.Eier2Wahl</dd></div>
-                                    <div class="flex justify-between"><dt class="text-slate-500">Futter</dt><dd class="font-medium text-slate-900">@model.FutterKg kg</dd></div>
-                                    <div class="flex justify-between"><dt class="text-slate-500">Wasser</dt><dd class="font-medium text-slate-900">@model.WasserLiter L</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Verluste</dt><dd class="font-medium text-slate-900">@(model.Verluste ?? 0)</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Eier 1e Wahl</dt><dd class="font-medium text-slate-900">@(model.Eier1Wahl ?? 0)</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Eier 2e Wahl</dt><dd class="font-medium text-slate-900">@(model.Eier2Wahl ?? 0)</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Futter</dt><dd class="font-medium text-slate-900">@(model.FutterKg ?? 0) kg</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Wasser</dt><dd class="font-medium text-slate-900">@(model.WasserLiter ?? 0) L</dd></div>
                                     @if (model.FutterlieferungKg.HasValue)
                                     {
                                         <div class="mt-1 flex justify-between rounded bg-blue-50 px-2 py-1 text-blue-700">
@@ -292,7 +292,7 @@
 
 @code {
     private int currentStep = 1;
-    private DailyEntry model = new();
+    private DailyEntryFormModel model = new();
     private List<Stall> stalls = new();
     private bool missingPreviousDayData = false;
     private bool isSuccess = false;
@@ -427,14 +427,33 @@
             return;
         }
 
-        model.CreatorId = currentUserId;
-        model.Status = EntryStatus.WartetAufFreigabe;
-        model.Id = 0; 
+        var newEntry = new DailyEntry
+        {
+            Date = model.Date,
+            StallId = model.StallId,
+            CreatorId = currentUserId,
+            Status = EntryStatus.WartetAufFreigabe,
+            Verluste = model.Verluste ?? 0,
+            Eier1Wahl = model.Eier1Wahl ?? 0,
+            Eier2Wahl = model.Eier2Wahl ?? 0,
+            FutterKg = model.FutterKg ?? 0,
+            WasserLiter = model.WasserLiter ?? 0,
+            FutterlieferungKg = model.FutterlieferungKg,
+            Bemerkungen = model.Bemerkungen,
+            Auslaufzeit = model.Auslaufzeit,
+            LichtVon = model.LichtVon,
+            LichtBis = model.LichtBis,
+            Eigewicht = model.Eigewicht,
+            Koerpergewicht = model.Koerpergewicht,
+            ZugaengeTiere = model.ZugaengeTiere,
+            KontrollzeitenVon = model.KontrollzeitenVon,
+            KontrollzeitenBis = model.KontrollzeitenBis
+        };
 
         try
         {
             using var context = await DbFactory.CreateDbContextAsync();
-            context.DailyEntries.Add(model);
+            context.DailyEntries.Add(newEntry);
             await context.SaveChangesAsync();
             isSuccess = true;
         }
@@ -450,7 +469,7 @@
 
     private void ResetWizard()
     {
-        model = new DailyEntry();
+        model = new DailyEntryFormModel();
         if (DateTime.Now.Hour < 12)
         {
             model.Date = DateTime.Today.AddDays(-1);
@@ -467,5 +486,30 @@
     private string GetStallName(int stallId)
     {
         return stalls.FirstOrDefault(s => s.Id == stallId)?.Name ?? "Unbekannt";
+    }
+
+    public class DailyEntryFormModel
+    {
+        public DateTime Date { get; set; } = DateTime.Today;
+        
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Bitte wählen Sie einen Stall aus.")]
+        [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue, ErrorMessage = "Bitte wählen Sie einen Stall aus.")]
+        public int StallId { get; set; }
+        
+        public int? Verluste { get; set; }
+        public int? Eier1Wahl { get; set; }
+        public int? Eier2Wahl { get; set; }
+        public decimal? FutterKg { get; set; }
+        public decimal? WasserLiter { get; set; }
+        public decimal? FutterlieferungKg { get; set; }
+        public string? Bemerkungen { get; set; }
+        public string? Auslaufzeit { get; set; }
+        public string? LichtVon { get; set; }
+        public string? LichtBis { get; set; }
+        public decimal? Eigewicht { get; set; }
+        public decimal? Koerpergewicht { get; set; }
+        public int? ZugaengeTiere { get; set; }
+        public string? KontrollzeitenVon { get; set; }
+        public string? KontrollzeitenBis { get; set; }
     }
 }

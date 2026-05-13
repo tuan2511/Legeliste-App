@@ -258,7 +258,7 @@
                         var eggsH = entry.Eier1Wahl + entry.Eier2Wahl;
                         var layH = CalcService.CalculateLayingPerformance(eggsH, flockSizeH);
                         var feedH = CalcService.CalculateFeedPerBird(entry.FutterKg, flockSizeH);
-                        var ageWeeks = entry.Stall != null ? (entry.Date - entry.Stall.Einstallungsdatum).Days / 7 + 1 : 0;
+                        var ageWeeks = entry.Stall != null ? 18 + (entry.Date - entry.Stall.Einstallungsdatum).Days / 7 : 18;
                         
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-3 py-3 font-medium text-slate-900 whitespace-nowrap">@entry.Date.ToShortDateString()</td>
