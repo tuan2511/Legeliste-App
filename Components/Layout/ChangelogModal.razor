@@ -91,16 +91,18 @@
         {
             try 
             {
-                var storedVersion = await JS.InvokeAsync<string>("localStorage.getItem", "last_seen_version");
-                if (storedVersion != CurrentAppVersion)
+                // Wir nutzen einen speziellen Key, um das Popup trotz v1.1 einmalig neu zu triggern
+                var hasSeen = await JS.InvokeAsync<string>("localStorage.getItem", "changelog_v11_confirmed");
+                if (hasSeen != "true")
                 {
+                    await Task.Delay(500);
                     isVisible = true;
                     StateHasChanged();
                 }
             }
             catch 
             {
-                // localStorage might not be available in some scenarios (e.g. prerendering)
+                // Prerendering Schutz
             }
         }
     }
@@ -114,6 +116,7 @@
     private async Task Close()
     {
         isVisible = false;
-        await JS.InvokeVoidAsync("localStorage.setItem", "last_seen_version", CurrentAppVersion);
+        // Speichere, dass der Nutzer es gesehen hat
+        await JS.InvokeVoidAsync("localStorage.setItem", "changelog_v11_confirmed", "true");
     }
 }
