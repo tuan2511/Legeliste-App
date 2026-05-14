@@ -482,3 +482,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Tailwind Standalone CLI Binary (wird lokal heruntergeladen, nicht commited)
+tailwindcss.exe
+package-lock.json

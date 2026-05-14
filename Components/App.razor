@@ -8,66 +8,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-                    colors: {
-                        border: 'hsl(220 13% 91%)',
-                        input: 'hsl(220 13% 91%)',
-                        ring: 'hsl(222 47% 51%)',
-                        background: 'hsl(210 20% 98%)',
-                        foreground: 'hsl(224 71% 4%)',
-                        primary: { DEFAULT: 'hsl(222 47% 51%)', foreground: 'hsl(210 20% 98%)' },
-                        secondary: { DEFAULT: 'hsl(220 14% 96%)', foreground: 'hsl(224 71% 4%)' },
-                        muted: { DEFAULT: 'hsl(220 14% 96%)', foreground: 'hsl(220 9% 46%)' },
-                        accent: { DEFAULT: 'hsl(220 14% 96%)', foreground: 'hsl(224 71% 4%)' },
-                        destructive: { DEFAULT: 'hsl(0 84% 60%)', foreground: 'hsl(210 20% 98%)' },
-                        card: { DEFAULT: 'hsl(0 0% 100%)', foreground: 'hsl(224 71% 4%)' },
-                    },
-                },
-            },
-        }
-    </script>
+    <!-- Tailwind CSS – lokal generiert via Standalone CLI (kein CDN!) -->
+    <link rel="stylesheet" href="css/tailwind.css" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["LegelisteApp.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        .tabular-nums { font-variant-numeric: tabular-nums; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: hsl(220 14% 96%); }
-        ::-webkit-scrollbar-thumb { background: hsl(220 9% 76%); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: hsl(220 9% 66%); }
-        .progress-bar { transition: width 0.3s ease; }
-
-        /* Active NavLink Styles */
-        .active {
-            background-color: rgb(241 245 249) !important;
-            color: rgb(15 23 42) !important;
-        }
-        .active svg {
-            color: rgb(71 85 105) !important;
-        }
-
-        /* Responsive table scrolling */
-        .overflow-x-auto { -webkit-overflow-scrolling: touch; }
-
-        /* Mobile padding adjustments */
-        @@media (max-width: 1023px) {
-            .space-y-6.p-6 { padding: 1rem; gap: 1rem; }
-            .grid.gap-6.p-6 { padding: 1rem; gap: 1rem; }
-            header { position: sticky; top: 0; z-index: 20; }
-        }
-
-        /* Smooth sidebar transition */
-        #sidebar { will-change: transform; }
-    </style>
 </head>
 
 <body class="min-h-screen bg-slate-50 text-slate-900">
