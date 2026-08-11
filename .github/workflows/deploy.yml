@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: 📥 Code auschecken
@@ -18,10 +18,12 @@ jobs:
         dotnet-version: '9.0.x'
 
     - name: 🔨 Projekt bauen & Publish
-      run: dotnet publish -c Release -o "${{ github.workspace }}/publish"
+      run: dotnet publish -c Release -o ./publish
 
-    - name: 🚀 Upload zu MonsterASP
-      uses: azure/webapps-deploy@v3
+    - name: 🚀 Upload zu MonsterASP via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
-        publish-profile: ${{ secrets.PUBLISH_PROFILE }}
-        package: "${{ github.workspace }}/publish"
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./publish/
