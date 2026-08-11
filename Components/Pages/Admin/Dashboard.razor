@@ -391,7 +391,6 @@
     private List<DailyEntry> allHistoryEntries = new();
     private List<StallStatistic> stallStats = new();
     private List<Stall> allStalls = new();
-    private bool isExporting = false;
     private string exportMessage = "";
 
     // Filter-State (Historie)
@@ -638,7 +637,6 @@
 
     private async Task ExportLast7Days()
     {
-        isExporting = true;
         exportMessage = "";
         
         try
@@ -672,10 +670,6 @@
         catch (Exception ex)
         {
             exportMessage = $"Fehler beim Export: {ex.Message}";
-        }
-        finally
-        {
-            isExporting = false;
         }
     }
 

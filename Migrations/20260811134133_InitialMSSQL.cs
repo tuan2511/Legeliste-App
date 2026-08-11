@@ -1,13 +1,12 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace LegelisteApp.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMSSQL : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,10 +15,11 @@ namespace LegelisteApp.Migrations
                 name: "Stalls",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    AnfangsbestandTiere = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    AnfangsbestandTiere = table.Column<int>(type: "int", nullable: false),
+                    Einstallungsdatum = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -30,11 +30,11 @@ namespace LegelisteApp.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Username = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    PasswordHash = table.Column<string>(type: "text", nullable: false),
-                    Role = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Role = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -45,24 +45,28 @@ namespace LegelisteApp.Migrations
                 name: "DailyEntries",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    StallId = table.Column<int>(type: "integer", nullable: false),
-                    CreatorId = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    ApprovedById = table.Column<int>(type: "integer", nullable: true),
-                    Verluste = table.Column<int>(type: "integer", nullable: false),
-                    Eier1Wahl = table.Column<int>(type: "integer", nullable: false),
-                    Eier2Wahl = table.Column<int>(type: "integer", nullable: false),
-                    FutterKg = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    WasserLiter = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    Bemerkungen = table.Column<string>(type: "text", nullable: true),
-                    Auslaufzeit = table.Column<string>(type: "text", nullable: true),
-                    Lichtstunden = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    Eigewicht = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    Koerpergewicht = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    Kontrollzeiten = table.Column<string>(type: "text", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    StallId = table.Column<int>(type: "int", nullable: false),
+                    CreatorId = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    ApprovedById = table.Column<int>(type: "int", nullable: true),
+                    Verluste = table.Column<int>(type: "int", nullable: false),
+                    Eier1Wahl = table.Column<int>(type: "int", nullable: false),
+                    Eier2Wahl = table.Column<int>(type: "int", nullable: false),
+                    FutterKg = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    WasserLiter = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    FutterlieferungKg = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Bemerkungen = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Auslaufzeit = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    LichtVon = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LichtBis = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Eigewicht = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Koerpergewicht = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    ZugaengeTiere = table.Column<int>(type: "int", nullable: true),
+                    KontrollzeitenVon = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    KontrollzeitenBis = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
                 },
                 constraints: table =>
                 {

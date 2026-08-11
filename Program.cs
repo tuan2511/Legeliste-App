@@ -8,8 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -17,7 +15,7 @@ builder.Services.AddRazorComponents()
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseSqlServer(connectionString));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

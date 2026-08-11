@@ -133,7 +133,7 @@
             .Select(g => new {
                 Week = g.Key,
                 AvgLay = g.Average(x => x.LayRate),
-                AvgWeight = g.Any(x => x.Weight.HasValue) ? g.Where(x => x.Weight.HasValue).Average(x => x.Weight.Value) : (double?)null,
+                AvgWeight = g.Any(x => x.Weight.HasValue) ? g.Where(x => x.Weight.HasValue).Average(x => x.Weight!.Value) : (double?)null,
                 MaxLoss = g.Max(x => x.LossPct)
             })
             .ToList();

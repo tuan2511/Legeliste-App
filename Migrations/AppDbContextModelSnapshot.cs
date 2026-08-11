@@ -3,8 +3,8 @@ using System;
 using LegelisteApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -18,43 +18,43 @@ namespace LegelisteApp.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.0")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("LegelisteApp.Data.Models.DailyEntry", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("ApprovedById")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Auslaufzeit")
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Bemerkungen")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("CreatorId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Eier1Wahl")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("Eier2Wahl")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("Eigewicht")
-                        .HasColumnType("numeric");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("FutterKg")
                         .HasColumnType("decimal(18,2)");
@@ -63,36 +63,36 @@ namespace LegelisteApp.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("Koerpergewicht")
-                        .HasColumnType("numeric");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("KontrollzeitenBis")
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("KontrollzeitenVon")
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("LichtBis")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LichtVon")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("StallId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("Verluste")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<decimal>("WasserLiter")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("ZugaengeTiere")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -110,20 +110,20 @@ namespace LegelisteApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AnfangsbestandTiere")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("Einstallungsdatum")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -134,21 +134,21 @@ namespace LegelisteApp.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Role")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 

@@ -115,7 +115,7 @@
                     return;
                 }
             }
-            NavigationManager.NavigateTo("/");
+            NavigationManager.NavigateTo("/", forceLoad: true);
         }
         else
         {
@@ -125,9 +125,9 @@
 
     private void RedirectBasedOnRole(ClaimsPrincipal user)
     {
-        if (user.IsInRole("Admin")) NavigationManager.NavigateTo("/admin");
-        else if (user.IsInRole("Praktikant")) NavigationManager.NavigateTo("/aktuelle-eintraege");
-        else NavigationManager.NavigateTo("/datenerfassung");
+        if (user.IsInRole("Admin")) NavigationManager.NavigateTo("/admin", forceLoad: true);
+        else if (user.IsInRole("Praktikant")) NavigationManager.NavigateTo("/aktuelle-eintraege", forceLoad: true);
+        else NavigationManager.NavigateTo("/datenerfassung", forceLoad: true);
     }
 
     public class LoginViewModel
