@@ -1,0 +1,27 @@
+name: Deploy to MonsterASP
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+    - name: 📥 Code auschecken
+      uses: actions/checkout@v4
+
+    - name: ⚙️ .NET 9 einrichten
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: 🔨 Projekt bauen & Publish
+      run: dotnet publish -c Release -o "${{ github.workspace }}/publish"
+
+    - name: 🚀 Upload zu MonsterASP
+      uses: azure/webapps-deploy@v3
+      with:
+        publish-profile: ${{ secrets.PUBLISH_PROFILE }}
+        package: "${{ github.workspace }}/publish"
