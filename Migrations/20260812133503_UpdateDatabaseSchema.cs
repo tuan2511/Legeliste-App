@@ -17,18 +17,6 @@ namespace LegelisteApp.Migrations
                 maxLength: 50,
                 nullable: true);
 
-            migrationBuilder.AddColumn<string>(
-                name: "LichtVon",
-                table: "DailyEntries",
-                type: "nvarchar(max)",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "LichtBis",
-                table: "DailyEntries",
-                type: "nvarchar(max)",
-                nullable: true);
-
             migrationBuilder.AddColumn<decimal>(
                 name: "Eigewicht",
                 table: "DailyEntries",
@@ -66,8 +54,7 @@ namespace LegelisteApp.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(name: "Auslaufzeit", table: "DailyEntries");
-            migrationBuilder.DropColumn(name: "LichtVon", table: "DailyEntries");
-            migrationBuilder.DropColumn(name: "LichtBis", table: "DailyEntries");
+
             migrationBuilder.DropColumn(name: "Eigewicht", table: "DailyEntries");
             migrationBuilder.DropColumn(name: "Koerpergewicht", table: "DailyEntries");
             migrationBuilder.DropColumn(name: "ZugaengeTiere", table: "DailyEntries");
