@@ -63,7 +63,8 @@ app.MapGet("/logout", async (HttpContext httpContext) =>
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    using var dbContext = dbContextFactory.CreateDbContext();
     dbContext.Database.Migrate();
 
     if (!dbContext.Users.Any(u => u.Username == "admin"))
