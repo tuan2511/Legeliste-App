@@ -113,7 +113,7 @@
                             <svg class="h-5 w-5 shrink-0 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m0 0V19a2 2 0 01-2 2H5a2 2 0 01-2-2v-5"/>
                             </svg>
-                            Benutzer
+                            Mitarbeiter
                         </NavLink>
                     </Authorized>
                 </AuthorizeView>
@@ -159,8 +159,12 @@
 </aside>
 
 @code {
-    private void CloseSidebar()
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private async Task CloseSidebar()
     {
-        // Wird auf Mobile nach Link-Klick aufgerufen
+        try {
+            await JS.InvokeVoidAsync("toggleMobileMenu", false);
+        } catch { }
     }
 }

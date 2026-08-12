@@ -4,6 +4,7 @@ using LegelisteApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LegelisteApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260811232503_UpdateModelsAndFeedDelivery")]
+    partial class UpdateModelsAndFeedDelivery
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -145,12 +148,7 @@ namespace LegelisteApp.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<int>("StallId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("StallId");
 
                     b.ToTable("FeedDeliveries");
                 });
@@ -231,17 +229,6 @@ namespace LegelisteApp.Migrations
                     b.Navigation("ApprovedBy");
 
                     b.Navigation("Creator");
-
-                    b.Navigation("Stall");
-                });
-
-            modelBuilder.Entity("LegelisteApp.Data.Models.FeedDelivery", b =>
-                {
-                    b.HasOne("LegelisteApp.Data.Models.Stall", "Stall")
-                        .WithMany()
-                        .HasForeignKey("StallId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("Stall");
                 });

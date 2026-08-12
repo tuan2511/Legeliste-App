@@ -139,27 +139,35 @@
                         </div>
                         <div class="space-y-6 p-6">
                             <div class="space-y-2">
-                                <label class="block text-sm font-medium text-slate-700">Verluste</label>
-                                <InputNumber @bind-Value="model.Verluste" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700">Verluste</label>
+                                    <InputNumber @bind-Value="model.Verluste" placeholder="0" class="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <InputCheckbox @bind-Value="model.IstAusgestallt" id="istAusgestallt" class="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                    <label for="istAusgestallt" class="text-sm font-medium text-slate-700">Massen-Ausstallung (Gesamtbestand ausstallen)</label>
+                                </div>
+                            </div>
                             </div>
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div class="space-y-2">
                                     <label class="block text-sm font-medium text-slate-700">Eier 1e Wahl</label>
-                                    <InputNumber @bind-Value="model.Eier1Wahl" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                    <InputNumber @bind-Value="model.Eier1Wahl" placeholder="0" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                                 </div>
                                 <div class="space-y-2">
                                     <label class="block text-sm font-medium text-slate-700">Eier 2e Wahl</label>
-                                    <InputNumber @bind-Value="model.Eier2Wahl" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                    <InputNumber @bind-Value="model.Eier2Wahl" placeholder="0" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div class="space-y-2">
                                     <label class="block text-sm font-medium text-slate-700">Futterverbrauch (letzte 24h in kg)</label>
-                                    <InputNumber @bind-Value="model.FutterKg" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                    <InputNumber @bind-Value="model.FutterKg" placeholder="0" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                                 </div>
                                 <div class="space-y-2">
                                     <label class="block text-sm font-medium text-slate-700">Wasserverbrauch (letzte 24h in Liter)</label>
-                                    <InputNumber @bind-Value="model.WasserLiter" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                    <InputNumber @bind-Value="model.WasserLiter" placeholder="0" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                                 </div>
                             </div>
                             <div class="space-y-2">
@@ -197,7 +205,24 @@
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-slate-700">Auslaufzeit</label>
-                                <InputText @bind-Value="model.Auslaufzeit" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 8:00 - 18:00" />
+                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-500 mb-1">Morgens von</label>
+                                        <InputText @bind-Value="model.AuslaufzeitMorgensVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="08:00" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-500 mb-1">Morgens bis</label>
+                                        <InputText @bind-Value="model.AuslaufzeitMorgensBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="12:00" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-500 mb-1">Abends von</label>
+                                        <InputText @bind-Value="model.AuslaufzeitAbendsVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="14:00" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-500 mb-1">Abends bis</label>
+                                        <InputText @bind-Value="model.AuslaufzeitAbendsBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="18:00" />
+                                    </div>
+                                </div>
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-slate-700">Licht</label>
@@ -215,11 +240,11 @@
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div class="space-y-2">
                                     <label class="block text-sm font-medium text-slate-700">Eigewicht (g)</label>
-                                    <InputNumber @bind-Value="model.Eigewicht" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                    <InputNumber @bind-Value="model.Eigewicht" placeholder="0" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                                 </div>
                                 <div class="space-y-2">
                                     <label class="block text-sm font-medium text-slate-700">Körpergewicht (g)</label>
-                                    <InputNumber @bind-Value="model.Koerpergewicht" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                    <InputNumber @bind-Value="model.Koerpergewicht" placeholder="0" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                                 </div>
                             </div>
                         </div>
@@ -259,7 +284,8 @@
                                 <h4 class="mb-3 text-sm font-medium text-slate-500">Zusatzdaten</h4>
                                 <dl class="grid gap-2 text-sm">
                                     <div class="flex justify-between"><dt class="text-slate-500">Kontrollzeiten</dt><dd class="font-medium text-slate-900">@(model.KontrollzeitenVon) - @(model.KontrollzeitenBis)</dd></div>
-                                    <div class="flex justify-between"><dt class="text-slate-500">Auslaufzeit</dt><dd class="font-medium text-slate-900">@(model.Auslaufzeit ?? "-")</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Auslauf Morgens</dt><dd class="font-medium text-slate-900">@(model.AuslaufzeitMorgensVon ?? "-") bis @(model.AuslaufzeitMorgensBis ?? "-")</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Auslauf Abends</dt><dd class="font-medium text-slate-900">@(model.AuslaufzeitAbendsVon ?? "-") bis @(model.AuslaufzeitAbendsBis ?? "-")</dd></div>
                                     <div class="flex justify-between"><dt class="text-slate-500">Licht</dt><dd class="font-medium text-slate-900">@(model.LichtVon) - @(model.LichtBis)</dd></div>
                                     <div class="flex justify-between"><dt class="text-slate-500">Eigewicht</dt><dd class="font-medium text-slate-900">@(model.Eigewicht?.ToString() ?? "-") g</dd></div>
                                     <div class="flex justify-between"><dt class="text-slate-500">Körpergewicht</dt><dd class="font-medium text-slate-900">@(model.Koerpergewicht?.ToString() ?? "-") g</dd></div>
@@ -442,11 +468,38 @@
             return;
         }
 
-        var newEntry = new DailyEntry
+        try
         {
-            Date = model.Date,
-            StallId = model.StallId,
-            CreatorId = currentUserId,
+            using var context = await DbFactory.CreateDbContextAsync();
+            
+            var userExists = await context.Users.AnyAsync(u => u.Id == currentUserId);
+            if (!userExists)
+            {
+                errorMessage = "Sitzungsfehler: Ihr Benutzerkonto wurde in der Datenbank nicht gefunden. Bitte loggen Sie sich einmal aus und wieder ein.";
+                return;
+            }
+
+            var stall = await context.Stalls.FindAsync(model.StallId);
+            
+            if (model.IstAusgestallt && stall != null)
+            {
+                var pastChanges = await context.DailyEntries
+                    .Where(e => e.StallId == model.StallId && e.Date < model.Date.Date)
+                    .SumAsync(e => e.Verluste - (e.ZugaengeTiere ?? 0));
+                    
+                var currentFlockSize = stall.AnfangsbestandTiere - pastChanges;
+                if (currentFlockSize > 0)
+                {
+                    model.Verluste = currentFlockSize;
+                }
+            }
+
+            var newEntry = new DailyEntry
+            {
+                Date = model.Date,
+                CreatedAt = DateTime.Now,
+                StallId = model.StallId,
+                CreatorId = currentUserId,
             Status = EntryStatus.WartetAufFreigabe,
             Verluste = model.Verluste ?? 0,
             Eier1Wahl = model.Eier1Wahl ?? 0,
@@ -455,7 +508,11 @@
             WasserLiter = model.WasserLiter ?? 0,
             FutterlieferungKg = model.FutterlieferungKg,
             Bemerkungen = model.Bemerkungen,
-            Auslaufzeit = model.Auslaufzeit,
+            IstAusgestallt = model.IstAusgestallt,
+            AuslaufzeitMorgensVon = model.AuslaufzeitMorgensVon,
+            AuslaufzeitMorgensBis = model.AuslaufzeitMorgensBis,
+            AuslaufzeitAbendsVon = model.AuslaufzeitAbendsVon,
+            AuslaufzeitAbendsBis = model.AuslaufzeitAbendsBis,
             LichtVon = model.LichtVon,
             LichtBis = model.LichtBis,
             Eigewicht = model.Eigewicht,
@@ -465,9 +522,6 @@
             KontrollzeitenBis = model.KontrollzeitenBis
         };
 
-        try
-        {
-            using var context = await DbFactory.CreateDbContextAsync();
             context.DailyEntries.Add(newEntry);
             await context.SaveChangesAsync();
             isSuccess = true;
@@ -518,7 +572,11 @@
         public decimal? WasserLiter { get; set; }
         public decimal? FutterlieferungKg { get; set; }
         public string? Bemerkungen { get; set; }
-        public string? Auslaufzeit { get; set; }
+        public bool IstAusgestallt { get; set; }
+        public string? AuslaufzeitMorgensVon { get; set; }
+        public string? AuslaufzeitMorgensBis { get; set; }
+        public string? AuslaufzeitAbendsVon { get; set; }
+        public string? AuslaufzeitAbendsBis { get; set; }
         public string? LichtVon { get; set; }
         public string? LichtBis { get; set; }
         public decimal? Eigewicht { get; set; }

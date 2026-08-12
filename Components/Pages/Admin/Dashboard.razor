@@ -142,6 +142,22 @@
                         <div class="text-xl font-bold text-slate-700">@CalcService.GetFlockAge(dsStall.Einstallungsdatum, DateTime.Today)</div>
                     </div>
                 }
+                <div class="rounded-xl border border-slate-200/50 bg-white p-5 shadow-sm col-span-full lg:col-span-1">
+                    <div class="flex items-center justify-between pb-2">
+                        <h3 class="text-sm font-medium text-slate-500">Futterbestand</h3>
+                        <button class="text-xs text-blue-600 hover:text-blue-800 font-medium" @onclick="() => OpenFeedDeliveryModal(detailStallId)">+ Lieferung</button>
+                    </div>
+                    <div class="flex items-center gap-3 mt-1">
+                        @{
+                            var balance = ds?.FeedBalanceKg ?? 0;
+                            var colorClass = balance < 1000 ? "bg-red-500" : (balance < 3000 ? "bg-amber-400" : "bg-emerald-500");
+                            var statusText = balance < 1000 ? "Kritisch" : (balance < 3000 ? "Knapp" : "Ausreichend");
+                        }
+                        <div class="h-4 w-4 rounded-full @colorClass shadow-sm border border-slate-200/50"></div>
+                        <div class="text-2xl font-bold text-slate-900">@balance.ToString("N0") kg</div>
+                    </div>
+                    <div class="text-xs text-slate-50 mt-1">Status: @statusText</div>
+                </div>
             </div>
 
         }
@@ -380,6 +396,50 @@
     </div>
 }
 
+    <!-- Feed Delivery Modal -->
+    @if (showFeedModal)
+    {
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+            <div class="w-full max-w-sm rounded-xl bg-white shadow-2xl overflow-hidden border border-slate-200">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Futterlieferung eintragen</h3>
+                    </div>
+                    <button @onclick="() => showFeedModal = false" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Datum</label>
+                        <input type="date" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="newFeedDelivery.Date" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Menge (Tonnen)</label>
+                        <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="newFeedDelivery.AmountTons" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Notiz (Optional)</label>
+                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="newFeedDelivery.Notes" />
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(feedSaveMessage))
+                    {
+                        <div class="rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-xs text-red-700">@feedSaveMessage</div>
+                    }
+                </div>
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                    <button class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors" @onclick="() => showFeedModal = false">
+                        Abbrechen
+                    </button>
+                    <button class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors" @onclick="SaveFeedDelivery">
+                        Speichern
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
 @code {
     private int activeTab = 1;
     private int statsSubTab = 1; // 1=Gesamtbetrieb, 2=Stall-Detail
@@ -406,6 +466,11 @@
     private bool showDeleteConfirm = false;
     private int deleteEntryId = 0;
     private bool isLoading = true;
+
+    // Feed Delivery Modal
+    private bool showFeedModal = false;
+    private FeedDelivery newFeedDelivery = new() { Date = DateTime.Today };
+    private string feedSaveMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -474,12 +539,21 @@
                 .Where(e => e.StallId == stall.Id)
                 .Sum(e => e.Verluste - (e.ZugaengeTiere ?? 0));
 
+            var feedConsumed = allHistoryEntries
+                .Where(e => e.StallId == stall.Id && e.Date >= stall.Einstallungsdatum)
+                .Sum(e => e.FutterKg);
+
+            var feedDelivered = await context.FeedDeliveries
+                .Where(fd => fd.StallId == stall.Id && fd.Date >= stall.Einstallungsdatum)
+                .SumAsync(fd => fd.AmountTons * 1000);
+
             stallStats.Add(new StallStatistic
             {
                 StallName = stall.Name,
                 Anfangsbestand = stall.AnfangsbestandTiere,
+                AktuellLebend = stall.AnfangsbestandTiere - netChanges,
                 Verluste = allHistoryEntries.Where(e => e.StallId == stall.Id).Sum(e => e.Verluste),
-                AktuellLebend = stall.AnfangsbestandTiere - netChanges
+                FeedBalanceKg = feedDelivered - feedConsumed
             });
         }
 
@@ -635,6 +709,29 @@
         }
     }
 
+    private async Task SaveFeedDelivery()
+    {
+        if (newFeedDelivery.AmountTons <= 0)
+        {
+            feedSaveMessage = "Menge muss größer als 0 sein.";
+            return;
+        }
+        
+        using var context = await DbFactory.CreateDbContextAsync();
+        context.FeedDeliveries.Add(newFeedDelivery);
+        await context.SaveChangesAsync();
+        
+        showFeedModal = false;
+        await LoadDataAsync(); // Refresh stats
+    }
+
+    private void OpenFeedDeliveryModal(int stallId)
+    {
+        newFeedDelivery = new FeedDelivery { StallId = stallId, Date = DateTime.Today };
+        feedSaveMessage = "";
+        showFeedModal = true;
+    }
+
     private async Task ExportLast7Days()
     {
         exportMessage = "";
@@ -673,11 +770,12 @@
         }
     }
 
-    public class StallStatistic
+    private class StallStatistic
     {
         public string StallName { get; set; } = "";
         public int Anfangsbestand { get; set; }
-        public int Verluste { get; set; }
         public int AktuellLebend { get; set; }
+        public int Verluste { get; set; }
+        public decimal FeedBalanceKg { get; set; }
     }
 }

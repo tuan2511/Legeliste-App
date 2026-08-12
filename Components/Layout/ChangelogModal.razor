@@ -24,45 +24,95 @@
                 <p class="text-blue-100">Version @CurrentAppVersion</p>
             </div>
             
-            <div class="p-6 space-y-6">
-                <div class="space-y-4">
-                    <div class="flex gap-4">
-                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
+            <div class="flex items-center justify-between px-6 pt-6 pb-2 border-b border-slate-100">
+                <button @onclick="ShowOlder" disabled="@(currentVersionIndex == versionNumbers.Length - 1)" class="p-2 text-slate-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors rounded-full hover:bg-slate-50" title="Ältere Version">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <h3 class="text-lg font-bold text-slate-800">Version @versionNumbers[currentVersionIndex]</h3>
+                <button @onclick="ShowNewer" disabled="@(currentVersionIndex == 0)" class="p-2 text-slate-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors rounded-full hover:bg-slate-50" title="Neuere Version">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-8 min-h-[300px]">
+                @if (currentVersionIndex == 0)
+                {
+                    <!-- Version 1.3 -->
+                    <div class="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div class="flex gap-4">
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-slate-900">Mitarbeiterverwaltung & UI</h4>
+                                <p class="text-sm text-slate-500">Praktikanten können Daten erfassen. Admins schalten sie frei. Eingabefelder haben jetzt clevere Platzhalter und speichern die genaue Uhrzeit.</p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 class="font-semibold text-slate-900">Performance-Boost</h4>
-                            <p class="text-sm text-slate-500">Die Navigation und das Laden der Daten sind jetzt spürbar schneller.</p>
+
+                        <div class="flex gap-4">
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-slate-900">Futter-Lagerbestand</h4>
+                                <p class="text-sm text-slate-500">Über das Dashboard lassen sich Futterlieferungen buchen. Das clevere Ampel-System warnt bei kritischen Futterbeständen.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-slate-900">Exports & Leistungskurve</h4>
+                                <p class="text-sm text-slate-500">Der Excel-Export erstrahlt in neuem, modernen Design (inklusive neuer Spalten). Auch die Leistungskurve wurde optisch hochwertig überarbeitet.</p>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="flex gap-4">
-                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-slate-900">Eingabefelder optimiert</h4>
-                            <p class="text-sm text-slate-500">Das "0-Problem" wurde behoben. Felder sind jetzt beim Klicken leer.</p>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-4">
-                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-slate-900">Biologisches Alter</h4>
-                            <p class="text-sm text-slate-500">Das Herdenalter wird nun dynamisch ab 18 Wochen berechnet.</p>
+                }
+                else if (currentVersionIndex == 1)
+                {
+                    <!-- Version 1.2 -->
+                    <div class="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div class="flex gap-4">
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-slate-900">Erweiterte Eingaben</h4>
+                                <p class="text-sm text-slate-500">Zyklische Eingaben und die Möglichkeit zur Massen-Ausstallung wurden zum Formular hinzugefügt.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
+                }
+                else if (currentVersionIndex == 2)
+                {
+                    <!-- Version 1.1 -->
+                    <div class="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div class="flex gap-4">
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-slate-900">System-Update</h4>
+                                <p class="text-sm text-slate-500">Vollständige Umstellung der Datenbank auf MSSQL und Optimierungen für das neue Hosting.</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
 
+            <div class="p-6 pt-0 border-t border-slate-100 mt-0">
                 <button @onclick="Close" class="w-full rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-lg hover:bg-slate-800 transition-all active:scale-[0.98]">
                     Verstanden
                 </button>
@@ -72,8 +122,11 @@
 }
 
 @code {
-    private const string CurrentAppVersion = "1.1";
+    private const string CurrentAppVersion = "1.3";
     private bool isVisible = false;
+
+    private int currentVersionIndex = 0;
+    private readonly string[] versionNumbers = { "1.3 (Aktuell)", "1.2", "1.1" };
 
     protected override void OnInitialized()
     {
@@ -91,8 +144,7 @@
         {
             try 
             {
-                // Wir nutzen einen speziellen Key, um das Popup trotz v1.1 einmalig neu zu triggern
-                var hasSeen = await JS.InvokeAsync<string>("localStorage.getItem", "changelog_v11_confirmed");
+                var hasSeen = await JS.InvokeAsync<string>("localStorage.getItem", "changelog_v13_confirmed");
                 if (hasSeen != "true")
                 {
                     await Task.Delay(500);
@@ -110,6 +162,7 @@
     public void Show()
     {
         isVisible = true;
+        currentVersionIndex = 0;
         StateHasChanged();
     }
 
@@ -117,6 +170,22 @@
     {
         isVisible = false;
         // Speichere, dass der Nutzer es gesehen hat
-        await JS.InvokeVoidAsync("localStorage.setItem", "changelog_v11_confirmed", "true");
+        await JS.InvokeVoidAsync("localStorage.setItem", "changelog_v13_confirmed", "true");
+    }
+
+    private void ShowNewer()
+    {
+        if (currentVersionIndex > 0)
+        {
+            currentVersionIndex--;
+        }
+    }
+
+    private void ShowOlder()
+    {
+        if (currentVersionIndex < versionNumbers.Length - 1)
+        {
+            currentVersionIndex++;
+        }
     }
 }

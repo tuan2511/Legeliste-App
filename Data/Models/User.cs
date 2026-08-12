@@ -16,4 +16,7 @@ public class User
 
     [Required]
     public UserRole Role { get; set; }
+
+    public bool IsActive { get; set; } = true;
+    public bool MustChangePassword { get; set; } = false;
 }

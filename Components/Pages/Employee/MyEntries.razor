@@ -213,6 +213,50 @@
 
                 <div class="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4">
                     <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Licht Von</label>
+                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.LichtVon" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Licht Bis</label>
+                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.LichtBis" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Auslauf Morgens Von</label>
+                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.AuslaufzeitMorgensVon" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Morgens Bis</label>
+                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.AuslaufzeitMorgensBis" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Auslauf Abends Von</label>
+                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.AuslaufzeitAbendsVon" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Abends Bis</label>
+                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.AuslaufzeitAbendsBis" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kontrollzeiten Von</label>
+                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.KontrollzeitenVon" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kontrollzeiten Bis</label>
+                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.KontrollzeitenBis" />
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eigewicht (g)</label>
                         <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editEigewicht" />
                     </div>
@@ -308,7 +352,15 @@
             Verluste = editVerluste,
             Eigewicht = editEigewicht,
             Koerpergewicht = editKoerpergewicht,
-            Bemerkungen = editingEntry.Bemerkungen
+            Bemerkungen = editingEntry.Bemerkungen,
+            LichtVon = editingEntry.LichtVon,
+            LichtBis = editingEntry.LichtBis,
+            AuslaufzeitMorgensVon = editingEntry.AuslaufzeitMorgensVon,
+            AuslaufzeitMorgensBis = editingEntry.AuslaufzeitMorgensBis,
+            AuslaufzeitAbendsVon = editingEntry.AuslaufzeitAbendsVon,
+            AuslaufzeitAbendsBis = editingEntry.AuslaufzeitAbendsBis,
+            KontrollzeitenVon = editingEntry.KontrollzeitenVon,
+            KontrollzeitenBis = editingEntry.KontrollzeitenBis
         };
 
         await EntryService.UpdateEntryAsync(updatedData, currentUser);

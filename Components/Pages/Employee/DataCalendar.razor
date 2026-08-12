@@ -13,8 +13,8 @@
 <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
     <div class="flex h-16 items-center justify-between px-6">
         <div>
-            <h1 class="text-lg font-semibold text-slate-900">Vollständigkeits-Check</h1>
-            <p class="text-sm text-slate-500">Überblick der Datenerfassung pro Stall</p>
+            <h1 class="text-lg font-semibold text-slate-900">Operative Daten</h1>
+            <p class="text-sm text-slate-500">Vollständigkeits-Check der Datenerfassung pro Stall</p>
         </div>
         <div class="flex items-center gap-4">
             <select @bind="selectedStallId" @bind:after="LoadCalendarData" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20">
@@ -142,7 +142,7 @@
 
         using var context = await DbFactory.CreateDbContextAsync();
         var entries = await context.DailyEntries
-            .Where(e => e.StallId == selectedStallId && e.Date >= start && e.Date < end)
+            .Where(e => e.StallId == selectedStallId && e.Date >= start && e.Date < end && (e.FutterKg > 0 || e.WasserLiter > 0 || e.Eier1Wahl > 0 || e.Verluste > 0 || e.Status == EntryStatus.Freigegeben))
             .Select(e => e.Date.Date)
             .ToListAsync();
 
@@ -178,9 +178,9 @@
 
     private void OnDayClick(DateTime date)
     {
-        if (date.Date > DateTime.Today || completedDates.Contains(date.Date)) return;
-
-        // Redirect zum Wizard mit Parametern
-        Nav.NavigateTo($"/datenerfassung?PreDate={date.ToString("yyyy-MM-dd")}&PreStall={selectedStallId}");
+        if (date.Date <= DateTime.Today && !completedDates.Contains(date.Date))
+        {
+            Nav.NavigateTo($"/datenerfassung?PreDate={date.ToString("yyyy-MM-dd")}&PreStall={selectedStallId}");
+        }
     }
 }

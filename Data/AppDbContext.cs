@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Stall> Stalls { get; set; }
     public DbSet<DailyEntry> DailyEntries { get; set; }
+    public DbSet<FeedDelivery> FeedDeliveries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

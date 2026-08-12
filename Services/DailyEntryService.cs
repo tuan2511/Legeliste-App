@@ -37,6 +37,14 @@ public class DailyEntryService
         dbEntry.Eigewicht = updatedData.Eigewicht;
         dbEntry.Koerpergewicht = updatedData.Koerpergewicht;
         dbEntry.Bemerkungen = updatedData.Bemerkungen;
+        dbEntry.LichtVon = updatedData.LichtVon;
+        dbEntry.LichtBis = updatedData.LichtBis;
+        dbEntry.AuslaufzeitMorgensVon = updatedData.AuslaufzeitMorgensVon;
+        dbEntry.AuslaufzeitMorgensBis = updatedData.AuslaufzeitMorgensBis;
+        dbEntry.AuslaufzeitAbendsVon = updatedData.AuslaufzeitAbendsVon;
+        dbEntry.AuslaufzeitAbendsBis = updatedData.AuslaufzeitAbendsBis;
+        dbEntry.KontrollzeitenVon = updatedData.KontrollzeitenVon;
+        dbEntry.KontrollzeitenBis = updatedData.KontrollzeitenBis;
 
         // Sicherheitsregel: Wenn Mitarbeiter bearbeitet -> Status zurück auf Wartend
         bool isAdmin = user.IsInRole("Admin");
