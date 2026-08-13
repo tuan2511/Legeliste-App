@@ -99,9 +99,7 @@
                             <th class="px-6 py-3">ID</th>
                             <th class="px-6 py-3">Benutzername</th>
                             <th class="px-6 py-3">Rolle</th>
-                            <th class="px-6 py-3 text-center">Aktiv</th>
-                            <th class="px-6 py-3 text-center">Passwort Ändern</th>
-                            <th class="px-6 py-3">Aktionen</th>
+                            <th class="px-6 py-3 text-right">Aktionen</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -122,16 +120,13 @@
                                         @user.Role
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-center">
-                                    <input type="checkbox" checked="@user.IsActive" @onchange="@(e => ToggleSetting(user, "IsActive", (bool?)e.Value ?? false))" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <input type="checkbox" checked="@user.MustChangePassword" @onchange="@(e => ToggleSetting(user, "MustChangePassword", (bool?)e.Value ?? false))" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button class="text-red-500 hover:text-red-700 p-1 transition-colors" @onclick="() => DeleteUser(user)">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    </button>
+                                <td class="px-6 py-4 text-right">
+                                    @if (!user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <button class="text-red-500 hover:text-red-700 p-1 transition-colors" @onclick="() => DeleteUser(user)">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -199,23 +194,15 @@
         await LoadUsersAsync(); // Refresh list
     }
 
-    private async Task ToggleSetting(User user, string setting, bool value)
-    {
-        using var context = await DbFactory.CreateDbContextAsync();
-        var dbUser = await context.Users.FindAsync(user.Id);
-        if (dbUser != null)
-        {
-            if (setting == "IsActive") dbUser.IsActive = value;
-            else if (setting == "MustChangePassword") dbUser.MustChangePassword = value;
-            
-            await context.SaveChangesAsync();
-            await LoadUsersAsync();
-        }
-    }
-
     private async Task DeleteUser(User user)
     {
-        // Simple confirmation logic omitted for brevity in POC
+        if (user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+        {
+            errorMessage = "Fehler: Der Administrator-Account ('admin') darf nicht gelöscht werden!";
+            successMessage = "";
+            return;
+        }
+
         using var context = await DbFactory.CreateDbContextAsync();
         var dbUser = await context.Users.FindAsync(user.Id);
         if (dbUser != null)
@@ -223,6 +210,7 @@
             context.Users.Remove(dbUser);
             await context.SaveChangesAsync();
             successMessage = $"Benutzer '{user.Username}' wurde gelöscht.";
+            errorMessage = "";
             await LoadUsersAsync();
         }
     }
