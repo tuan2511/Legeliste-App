@@ -97,11 +97,36 @@
 
         <div class="rounded-xl border border-slate-200/50 bg-white shadow-sm overflow-hidden">
             <div class="border-b border-slate-100 px-6 py-4">
-                <h3 class="text-base font-semibold text-slate-900">Futter- & Wasserverbrauch</h3>
+                <h3 class="text-base font-semibold text-slate-900">Futter- &amp; Wasserverbrauch</h3>
                 <p class="text-sm text-slate-500">Letzte 7 Tage</p>
             </div>
             <div class="p-4 sm:p-6 h-[250px] sm:h-[300px]">
                 <canvas id="consumptionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Futterbestand-Verlauf Chart -->
+        <div class="rounded-xl border border-slate-200/50 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-semibold text-slate-900">📦 Futterbestand-Verlauf</h3>
+                    <p class="text-sm text-slate-500">Letzte 30 Tage · Aktuell: <strong style="color:@GetBalanceColor()">@GetLastBalance().ToString("N0") kg</strong></p>
+                </div>
+                <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        @onclick="() => OpenFeedDeliveryModal(0)">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                    Lieferung erfassen
+                </button>
+            </div>
+            <div class="p-4 overflow-x-auto">
+                @if (inventoryHistory.Count > 0)
+                {
+                    @((MarkupString)BuildInventoryChartSvg())
+                }
+                else
+                {
+                    <p class="text-sm text-slate-400 text-center py-10">Noch keine Daten – Lieferungen und freigegebene Einträge werden hier angezeigt.</p>
+                }
             </div>
         </div>
     }
@@ -511,8 +536,15 @@
                         <input type="date" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="newFeedDelivery.Date" />
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Menge (Tonnen)</label>
-                        <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="newFeedDelivery.AmountTons" />
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Menge (kg)</label>
+                        <input type="number" step="1" min="1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="newFeedDelivery.AmountKg" placeholder="z.B. 2000" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Stall (optional)</label>
+                        <select class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="newFeedDelivery.StallId">
+                            <option value="">Alle Стälle (globale Lieferung)</option>
+                            @foreach (var s in allStalls) { <option value="@s.Id">@s.Name</option> }
+                        </select>
                     </div>
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Notiz (Optional)</label>
@@ -565,8 +597,11 @@
 
     // Feed Delivery Modal
     private bool showFeedModal = false;
-    private FeedDelivery newFeedDelivery = new() { Date = DateTime.Today };
+    private FeedDelivery newFeedDelivery = new() { Date = DateTime.Today, AmountKg = 0 };
     private string feedSaveMessage = "";
+
+    // Futterbestand-Verlauf für das Diagramm
+    private List<(string Date, decimal BalanceKg)> inventoryHistory = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -635,13 +670,14 @@
                 .Where(e => e.StallId == stall.Id)
                 .Sum(e => (e.Verluste ?? 0) - (e.ZugaengeTiere ?? 0));
 
+            // Futterverbrauch: Zykluseinträge werden auf die Anzahl Tage verteilt
             var feedConsumed = allHistoryEntries
                 .Where(e => e.StallId == stall.Id && e.Date >= stall.Einstallungsdatum)
                 .Sum(e => e.FutterKg ?? 0);
 
             var feedDelivered = await context.FeedDeliveries
-                .Where(fd => fd.StallId == stall.Id && fd.Date >= stall.Einstallungsdatum)
-                .SumAsync(fd => fd.AmountTons * 1000);
+                .Where(fd => (fd.StallId == null || fd.StallId == stall.Id) && fd.Date >= stall.Einstallungsdatum)
+                .SumAsync(fd => fd.AmountKg);
 
             stallStats.Add(new StallStatistic
             {
@@ -653,7 +689,26 @@
             });
         }
 
-        // Chart wird jetzt in OnAfterRenderAsync oder beim Tab-Wechsel initialisiert
+        // Futterbestand-Verlauf für Diagramm (letzte 30 Tage, global)
+        inventoryHistory.Clear();
+        var allDeliveries = await context.FeedDeliveries
+            .OrderBy(fd => fd.Date)
+            .ToListAsync();
+        var totalDelivered = allDeliveries.Sum(fd => fd.AmountKg);
+        var allConsumed = allHistoryEntries
+            .Where(e => e.Status == EntryStatus.Freigegeben)
+            .Sum(e => e.FutterKg ?? 0);
+        decimal runningBalance = totalDelivered;
+        for (int i = 29; i >= 0; i--)
+        {
+            var day = DateTime.Today.AddDays(-i);
+            var dayDelivered = allDeliveries.Where(fd => fd.Date.Date == day.Date).Sum(fd => fd.AmountKg);
+            var dayConsumed = allHistoryEntries
+                .Where(e => e.Status == EntryStatus.Freigegeben && e.Date.Date == day.Date)
+                .Sum(e => e.FutterKg ?? 0);
+            runningBalance += dayDelivered - dayConsumed;
+            inventoryHistory.Add((day.ToString("dd.MM."), runningBalance));
+        }
     }
 
     private async Task SetStatsSubTab(int tab)
@@ -848,7 +903,7 @@
 
     private async Task SaveFeedDelivery()
     {
-        if (newFeedDelivery.AmountTons <= 0)
+        if (newFeedDelivery.AmountKg <= 0)
         {
             feedSaveMessage = "Menge muss größer als 0 sein.";
             return;
@@ -864,7 +919,7 @@
 
     private void OpenFeedDeliveryModal(int stallId)
     {
-        newFeedDelivery = new FeedDelivery { StallId = stallId, Date = DateTime.Today };
+        newFeedDelivery = new FeedDelivery { StallId = stallId > 0 ? stallId : null, Date = DateTime.Today, AmountKg = 0 };
         feedSaveMessage = "";
         showFeedModal = true;
     }
@@ -905,6 +960,81 @@
         {
             exportMessage = $"Fehler beim Export: {ex.Message}";
         }
+    }
+
+    private decimal GetLastBalance() =>
+        inventoryHistory.Count > 0 ? inventoryHistory.Last().BalanceKg : 0;
+
+    private string GetBalanceColor()
+    {
+        var bal = GetLastBalance();
+        return bal < 1000 ? "#ef4444" : (bal < 3000 ? "#f59e0b" : "#10b981");
+    }
+
+    private string BuildInventoryChartSvg()
+    {
+        const int svgW = 800, svgH = 200, padL = 60, padR = 20, padT = 15, padB = 30;
+        int chartW = svgW - padL - padR;
+        int chartH = svgH - padT - padB;
+
+        double maxBal = Math.Max((double)inventoryHistory.Max(h => h.BalanceKg), 1);
+        double minBal = Math.Min((double)inventoryHistory.Min(h => h.BalanceKg), 0);
+        double range = maxBal - minBal;
+        if (range == 0) range = 1;
+
+        var n = inventoryHistory.Count;
+        string color = inventoryHistory.Last().BalanceKg < 1000 ? "#ef4444"
+                     : inventoryHistory.Last().BalanceKg < 3000 ? "#f59e0b" : "#10b981";
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"<svg viewBox=\"0 0 {svgW} {svgH}\" style=\"width:100%;min-width:320px;height:200px;\">");
+
+        // Gitter + Y-Labels
+        for (int gi = 0; gi <= 4; gi++)
+        {
+            double gy = padT + gi * (double)chartH / 4;
+            double gVal = maxBal - gi * range / 4;
+            sb.Append($"<line x1=\"{padL}\" y1=\"{gy:F0}\" x2=\"{svgW - padR}\" y2=\"{gy:F0}\" stroke=\"#f1f5f9\" stroke-width=\"1\"/>");
+            sb.Append($"<text x=\"{padL - 6}\" y=\"{gy + 4:F0}\" text-anchor=\"end\" font-size=\"9\" fill=\"#94a3b8\">{(gVal / 1000):N1}t</text>");
+        }
+
+        // X-Labels
+        int labelStep = Math.Max(1, n / 6);
+        for (int li = 0; li < n; li += labelStep)
+        {
+            double lx = padL + (n > 1 ? li * (double)chartW / (n - 1) : chartW / 2.0);
+            sb.Append($"<text x=\"{lx:F0}\" y=\"{svgH}\" text-anchor=\"middle\" font-size=\"8\" fill=\"#94a3b8\">{inventoryHistory[li].Date}</text>");
+        }
+
+        // Punkte berechnen
+        var pts = inventoryHistory.Select((h, i) => {
+            double x = padL + (n > 1 ? i * (double)chartW / (n - 1) : chartW / 2.0);
+            double y = padT + chartH - ((double)h.BalanceKg - minBal) / range * chartH;
+            return (x, y);
+        }).ToList();
+
+        // Füllfläche
+        double baseY = padT + chartH - (Math.Max(0, -minBal) / range * chartH);
+        var pathPts = string.Join(" ", pts.Select(p => $"L {p.x:F1},{p.y:F1}"));
+        sb.Append($"<path d=\"M {padL},{baseY:F0} {pathPts} L {padL + chartW},{baseY:F0} Z\" fill=\"{color}\" opacity=\"0.08\"/>");
+
+        // Linie
+        var polyline = string.Join(" ", pts.Select(p => $"{p.x:F1},{p.y:F1}"));
+        sb.Append($"<polyline points=\"{polyline}\" fill=\"none\" stroke=\"{color}\" stroke-width=\"2\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/>");
+
+        // Endpunkt
+        if (pts.Any())
+            sb.Append($"<circle cx=\"{pts.Last().x:F1}\" cy=\"{pts.Last().y:F1}\" r=\"4\" fill=\"{color}\"/>");
+
+        // Nulllinie (falls negativ)
+        if (minBal < 0)
+        {
+            double zeroY = padT + chartH - (0 - minBal) / range * chartH;
+            sb.Append($"<line x1=\"{padL}\" y1=\"{zeroY:F0}\" x2=\"{svgW - padR}\" y2=\"{zeroY:F0}\" stroke=\"#ef4444\" stroke-width=\"1\" stroke-dasharray=\"4,3\"/>");
+        }
+
+        sb.Append("</svg>");
+        return sb.ToString();
     }
 
     private class StallStatistic

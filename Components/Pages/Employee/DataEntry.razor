@@ -164,15 +164,53 @@
                             </div>
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div class="space-y-2">
-                                    <label class="block text-sm font-medium text-slate-700">Futterverbrauch (letzte 24h in kg) <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-slate-700">
+                                        Futterverbrauch (kg)
+                                        @if (model.FutterWasserZyklusBis.HasValue)
+                                        {
+                                            var days = Math.Max(1, (int)(model.FutterWasserZyklusBis.Value.Date - model.Date.Date).TotalDays + 1);
+                                            <span class="ml-1 text-xs text-blue-600 font-normal">über @days Tag(e)</span>
+                                        }
+                                        <span class="text-red-500">*</span>
+                                    </label>
                                     <InputNumber @bind-Value="model.FutterKg" placeholder="0" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                                     <ValidationMessage For="@(() => model.FutterKg)" class="text-xs text-red-500 mt-1" />
                                 </div>
                                 <div class="space-y-2">
-                                    <label class="block text-sm font-medium text-slate-700">Wasserverbrauch (letzte 24h in Liter) <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-slate-700">
+                                        Wasserverbrauch (Liter)
+                                        @if (model.FutterWasserZyklusBis.HasValue)
+                                        {
+                                            var days = Math.Max(1, (int)(model.FutterWasserZyklusBis.Value.Date - model.Date.Date).TotalDays + 1);
+                                            <span class="ml-1 text-xs text-blue-600 font-normal">über @days Tag(e)</span>
+                                        }
+                                        <span class="text-red-500">*</span>
+                                    </label>
                                     <InputNumber @bind-Value="model.WasserLiter" placeholder="0" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                                     <ValidationMessage For="@(() => model.WasserLiter)" class="text-xs text-red-500 mt-1" />
                                 </div>
+                            </div>
+
+                            <!-- Flexible Zyklen -->
+                            <div class="rounded-lg border border-blue-100 bg-blue-50/50 p-4 space-y-3">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="isZyklus" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                           checked="@model.FutterWasserZyklusBis.HasValue"
+                                           @onchange="e => { if ((bool?)e.Value == true) model.FutterWasserZyklusBis = model.Date.AddDays(1); else model.FutterWasserZyklusBis = null; }" />
+                                    <label for="isZyklus" class="text-sm font-medium text-blue-800">Mehrtages-Zyklus (Futter/Wasser gilt für mehrere Tage)</label>
+                                </div>
+                                @if (model.FutterWasserZyklusBis.HasValue)
+                                {
+                                    <div class="space-y-1">
+                                        <label class="text-xs font-bold text-blue-700 uppercase tracking-wider">Zeitraum gültig bis</label>
+                                        <InputDate @bind-Value="model.FutterWasserZyklusBis" class="block w-full rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                        <p class="text-[10px] text-blue-600">Der eingegebene Verbrauch gilt für den Zeitraum vom @model.Date.ToShortDateString() bis @model.FutterWasserZyklusBis.Value.ToShortDateString().</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-xs text-blue-600">Aktivieren, wenn Futter/Wasser nur alle paar Tage abgelesen wird (z.B. 3-Tage- oder 7-Tage-Zyklus).</p>
+                                }
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-slate-700">Futterlieferung erhalten? (optional, in kg)</label>
@@ -511,6 +549,7 @@
             FutterKg = model.FutterKg ?? 0,
             WasserLiter = model.WasserLiter ?? 0,
             FutterlieferungKg = model.FutterlieferungKg,
+            FutterWasserZyklusBis = model.FutterWasserZyklusBis,
             Bemerkungen = model.Bemerkungen,
             IstAusgestallt = model.IstAusgestallt,
             AuslaufzeitMorgensVon = model.AuslaufzeitMorgensVon,
@@ -593,5 +632,6 @@
         public int? ZugaengeTiere { get; set; }
         public string? KontrollzeitenVon { get; set; }
         public string? KontrollzeitenBis { get; set; }
+        public DateTime? FutterWasserZyklusBis { get; set; }
     }
 }

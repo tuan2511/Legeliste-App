@@ -12,14 +12,20 @@ public class FeedDelivery
     [DataType(DataType.Date)]
     public DateTime Date { get; set; }
 
-    [Required]
-    public int StallId { get; set; }
+    /// <summary>
+    /// Optional: Dem Stall zugeordnete Lieferung. Null = globale Lieferung für alle Ställe.
+    /// </summary>
+    public int? StallId { get; set; }
 
     [ForeignKey(nameof(StallId))]
     public Stall? Stall { get; set; }
 
+    /// <summary>
+    /// Gelieferte Menge in Kilogramm.
+    /// </summary>
     [Required]
-    public decimal AmountTons { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal AmountKg { get; set; }
 
     [MaxLength(500)]
     public string? Notes { get; set; }
