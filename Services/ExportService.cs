@@ -78,16 +78,16 @@ public class ExportService
                 
                 var pastChanges = await context.DailyEntries
                     .Where(e => e.StallId == entry.StallId && e.Date < entry.Date && e.Status == EntryStatus.Freigegeben)
-                    .SumAsync(e => e.Verluste - (e.ZugaengeTiere ?? 0));
+                    .SumAsync(e => (e.Verluste ?? 0) - (e.ZugaengeTiere ?? 0));
                 
                 int currentFlockSize = stall.AnfangsbestandTiere - pastChanges;
-                int todayLosses = entry.Verluste;
+                int todayLosses = entry.Verluste ?? 0;
                 int todayZugaenge = entry.ZugaengeTiere ?? 0;
-                int totalEggs = entry.Eier1Wahl + entry.Eier2Wahl;
+                int totalEggs = (entry.Eier1Wahl ?? 0) + (entry.Eier2Wahl ?? 0);
                 
                 var legeleistung = _calcService.CalculateLayingPerformance(totalEggs, currentFlockSize);
-                var futterProTier = _calcService.CalculateFeedPerBird(entry.FutterKg, currentFlockSize);
-                var wasserProTier = _calcService.CalculateWaterPerBird(entry.WasserLiter, currentFlockSize);
+                var futterProTier = _calcService.CalculateFeedPerBird(entry.FutterKg ?? 0, currentFlockSize);
+                var wasserProTier = _calcService.CalculateWaterPerBird(entry.WasserLiter ?? 0, currentFlockSize);
 
                 // Alternierende Zeilenfarbe
                 var currentBg = (row % 2 == 0) ? rowBgAlt : rowBg;
@@ -125,11 +125,11 @@ public class ExportService
 
                 weeklyLosses += todayLosses;
                 weeklyZugaenge += todayZugaenge;
-                weeklyEggs1 += entry.Eier1Wahl;
-                weeklyEggs2 += entry.Eier2Wahl;
+                weeklyEggs1 += entry.Eier1Wahl ?? 0;
+                weeklyEggs2 += entry.Eier2Wahl ?? 0;
                 weeklyEggsTotal += totalEggs;
-                weeklyFutter += entry.FutterKg;
-                weeklyWasser += entry.WasserLiter;
+                weeklyFutter += entry.FutterKg ?? 0;
+                weeklyWasser += entry.WasserLiter ?? 0;
                 
                 tageImBlock++;
                 row++;

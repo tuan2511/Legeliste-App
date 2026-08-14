@@ -34,20 +34,17 @@ public class DailyEntry
     [ForeignKey(nameof(ApprovedById))]
     public User? ApprovedBy { get; set; }
 
-    [Required]
-    public int Verluste { get; set; }
+    public int? Verluste { get; set; }
     
-    [Required]
-    public int Eier1Wahl { get; set; }
+    public int? Eier1Wahl { get; set; }
     
-    [Required]
-    public int Eier2Wahl { get; set; }
+    public int? Eier2Wahl { get; set; }
     
     [Column(TypeName = "decimal(18,2)")]
-    public decimal FutterKg { get; set; }
+    public decimal? FutterKg { get; set; }
     
     [Column(TypeName = "decimal(18,2)")]
-    public decimal WasserLiter { get; set; }
+    public decimal? WasserLiter { get; set; }
 
     [Column(TypeName = "decimal(18,2)")]
     public decimal? FutterlieferungKg { get; set; }

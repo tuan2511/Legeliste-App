@@ -569,18 +569,14 @@
         [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue, ErrorMessage = "Bitte wählen Sie einen Stall aus.")]
         public int StallId { get; set; }
         
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Verluste sind erforderlich.")]
         public int? Verluste { get; set; }
         
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Eier 1. Wahl sind erforderlich.")]
         public int? Eier1Wahl { get; set; }
         
         public int? Eier2Wahl { get; set; }
         
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Futterverbrauch ist erforderlich.")]
         public decimal? FutterKg { get; set; }
         
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Wasserverbrauch ist erforderlich.")]
         public decimal? WasserLiter { get; set; }
         
         public decimal? FutterlieferungKg { get; set; }

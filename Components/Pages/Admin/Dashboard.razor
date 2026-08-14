@@ -54,7 +54,7 @@
     {
         var totalBestand = stallStats.Sum(s => s.AktuellLebend);
         var totalVerluste = stallStats.Sum(s => s.Verluste);
-        var todayEggs = allHistoryEntries.Where(e => e.Date.Date == DateTime.Today).Sum(e => e.Eier1Wahl + e.Eier2Wahl);
+        var todayEggs = allHistoryEntries.Where(e => e.Date.Date == DateTime.Today).Sum(e => (e.Eier1Wahl ?? 0) + (e.Eier2Wahl ?? 0));
         var avgLay = stallStats.Count > 0 && totalBestand > 0 ? CalcService.CalculateLayingPerformance(todayEggs, totalBestand) : 0m;
         var verlustPctTotal = stallStats.Sum(s => s.Anfangsbestand) > 0 ? (double)totalVerluste / stallStats.Sum(s => s.Anfangsbestand) * 100 : 0;
 
@@ -121,7 +121,7 @@
             var dsStall = allStalls.FirstOrDefault(s => s.Id == detailStallId);
             var dsEntries = allHistoryEntries.Where(e => e.StallId == detailStallId).OrderByDescending(e => e.Date).ToList();
             var dsVerlustPct = ds != null && ds.Anfangsbestand > 0 ? (double)ds.Verluste / ds.Anfangsbestand * 100 : 0;
-            var dsTodayEggs = dsEntries.Where(e => e.Date.Date == DateTime.Today).Sum(e => e.Eier1Wahl + e.Eier2Wahl);
+            var dsTodayEggs = dsEntries.Where(e => e.Date.Date == DateTime.Today).Sum(e => (e.Eier1Wahl ?? 0) + (e.Eier2Wahl ?? 0));
             
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="rounded-xl border border-slate-200/50 bg-white p-5 shadow-sm">
@@ -208,7 +208,7 @@
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex flex-col items-center">
                                         @if (isAdmin) { <input type="number" step="0.1" class="w-20 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.FutterKg" /> }
-                                        else { <span>@entry.FutterKg.ToString("N1")</span> }
+                                        else { <span>@((entry.FutterKg ?? 0).ToString("N1"))</span> }
                                         @if (entry.FutterlieferungKg.HasValue)
                                         {
                                             <span class="text-[10px] text-blue-600 font-bold flex items-center gap-0.5 mt-0.5" title="Futterlieferung">
@@ -219,12 +219,15 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     @if (isAdmin) { <input type="number" step="0.1" class="w-20 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.WasserLiter" /> }
-                                    else { <span>@entry.WasserLiter.ToString("N1")</span> }
+                                    else { <span>@((entry.WasserLiter ?? 0).ToString("N1"))</span> }
                                 </td>
                                 <td class="px-4 py-3">
                                     @if (isAdmin)
                                     {
-                                        <button class="bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-700 shadow-sm transition-all" @onclick="() => ApproveEntry(entry)">
+                                        bool isComplete = entry.Verluste.HasValue && entry.Eier1Wahl.HasValue && entry.FutterKg.HasValue && entry.WasserLiter.HasValue;
+                                        <button class="px-4 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all @(isComplete ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-slate-300 text-slate-500 cursor-not-allowed")" 
+                                                disabled="@(!isComplete)"
+                                                @onclick="() => ApproveEntry(entry)">
                                             Freigeben
                                         </button>
                                     }
@@ -278,13 +281,13 @@
                 <tbody class="divide-y divide-slate-100">
                     @foreach (var entry in historyEntries)
                     {
-                        var pastChangesH = allHistoryEntries.Where(e => e.StallId == entry.StallId && e.Date <= entry.Date).Sum(e => e.Verluste - (e.ZugaengeTiere ?? 0));
-                        var flockSizeH = entry.Stall != null ? entry.Stall.AnfangsbestandTiere - (pastChangesH - (entry.Verluste - (entry.ZugaengeTiere ?? 0))) : 0; 
-                        var currentFlockSize = flockSizeH - (entry.Verluste - (entry.ZugaengeTiere ?? 0)); 
+                        var pastChangesH = allHistoryEntries.Where(e => e.StallId == entry.StallId && e.Date <= entry.Date).Sum(e => (e.Verluste ?? 0) - (e.ZugaengeTiere ?? 0));
+                        var flockSizeH = entry.Stall != null ? entry.Stall.AnfangsbestandTiere - (pastChangesH - ((entry.Verluste ?? 0) - (entry.ZugaengeTiere ?? 0))) : 0; 
+                        var currentFlockSize = flockSizeH - ((entry.Verluste ?? 0) - (entry.ZugaengeTiere ?? 0)); 
                         
-                        var eggsH = entry.Eier1Wahl + entry.Eier2Wahl;
+                        var eggsH = (entry.Eier1Wahl ?? 0) + (entry.Eier2Wahl ?? 0);
                         var layH = CalcService.CalculateLayingPerformance(eggsH, flockSizeH);
-                        var feedH = CalcService.CalculateFeedPerBird(entry.FutterKg, flockSizeH);
+                        var feedH = CalcService.CalculateFeedPerBird(entry.FutterKg ?? 0, flockSizeH);
                         var ageWeeks = entry.Stall != null ? 18 + (entry.Date - entry.Stall.Einstallungsdatum).Days / 7 : 18;
                         
                         <tr class="hover:bg-slate-50/50 transition-colors">
@@ -295,7 +298,7 @@
                             <td class="px-3 py-3 text-center text-slate-600 tabular-nums">@ageWeeks</td>
                             <td class="px-3 py-3 text-right tabular-nums">
                                 <div class="flex flex-col items-end">
-                                     <span class="@(entry.Verluste > 0 ? "text-amber-600 font-medium" : "text-slate-400")">@entry.Verluste</span>
+                                     <span class="@((entry.Verluste ?? 0) > 0 ? "text-amber-600 font-medium" : "text-slate-400")">@(entry.Verluste ?? 0)</span>
                                      @if (entry.ZugaengeTiere > 0)
                                      {
                                          <span class="text-[10px] text-emerald-600 font-bold">+@entry.ZugaengeTiere</span>
@@ -307,7 +310,7 @@
                             <td class="px-3 py-3 text-right tabular-nums text-slate-600 hidden sm:table-cell">@feedH.ToString("0.##")g</td>
                             <td class="px-3 py-3 text-right tabular-nums text-slate-600">
                                 <div class="flex flex-col items-end">
-                                    <span>@entry.FutterKg.ToString("N1")kg</span>
+                                    <span>@((entry.FutterKg ?? 0).ToString("N1"))kg</span>
                                     @if (entry.FutterlieferungKg.HasValue)
                                     {
                                         <span class="text-[9px] text-blue-600 font-bold bg-blue-50 px-1 rounded flex items-center gap-0.5 mt-0.5" title="Futterlieferung">
@@ -316,7 +319,7 @@
                                     }
                                 </div>
                             </td>
-                            <td class="px-3 py-3 text-right tabular-nums text-slate-600">@entry.WasserLiter.ToString("N1")L</td>
+                            <td class="px-3 py-3 text-right tabular-nums text-slate-600">@((entry.WasserLiter ?? 0).ToString("N1"))L</td>
                             <td class="px-3 py-3 text-slate-400 text-xs italic truncate max-w-[100px] hidden xl:table-cell" title="@entry.Bemerkungen">@(string.IsNullOrEmpty(entry.Bemerkungen) ? "-" : entry.Bemerkungen)</td>
                             <td class="px-3 py-3">
                                 @if (isAdmin)
@@ -537,11 +540,11 @@
         {
             var netChanges = allHistoryEntries
                 .Where(e => e.StallId == stall.Id)
-                .Sum(e => e.Verluste - (e.ZugaengeTiere ?? 0));
+                .Sum(e => (e.Verluste ?? 0) - (e.ZugaengeTiere ?? 0));
 
             var feedConsumed = allHistoryEntries
                 .Where(e => e.StallId == stall.Id && e.Date >= stall.Einstallungsdatum)
-                .Sum(e => e.FutterKg);
+                .Sum(e => e.FutterKg ?? 0);
 
             var feedDelivered = await context.FeedDeliveries
                 .Where(fd => fd.StallId == stall.Id && fd.Date >= stall.Einstallungsdatum)
@@ -552,7 +555,7 @@
                 StallName = stall.Name,
                 Anfangsbestand = stall.AnfangsbestandTiere,
                 AktuellLebend = stall.AnfangsbestandTiere - netChanges,
-                Verluste = allHistoryEntries.Where(e => e.StallId == stall.Id).Sum(e => e.Verluste),
+                Verluste = allHistoryEntries.Where(e => e.StallId == stall.Id).Sum(e => e.Verluste ?? 0),
                 FeedBalanceKg = feedDelivered - feedConsumed
             });
         }
@@ -682,6 +685,12 @@
     private async Task ApproveEntry(DailyEntry entry)
     {
         if (currentUserId == 0) return;
+
+        if (!entry.Verluste.HasValue || !entry.Eier1Wahl.HasValue || !entry.FutterKg.HasValue || !entry.WasserLiter.HasValue)
+        {
+            await JS.InvokeVoidAsync("alert", "Fehler: Verluste, Eier 1. Wahl, Futterverbrauch und Wasserverbrauch sind Pflichtfelder. Bitte füllen Sie alle aus, bevor Sie freigeben!");
+            return;
+        }
 
         using var context = await DbFactory.CreateDbContextAsync();
         
