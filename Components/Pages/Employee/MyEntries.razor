@@ -181,7 +181,7 @@
             <div class="p-6 overflow-y-auto max-h-[70vh] space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eier 1. Wahl</label>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eier 1. Wahl <span class="text-red-500">*</span></label>
                         <input type="number" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editEier1" />
                     </div>
                     <div class="space-y-1">
@@ -192,11 +192,11 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Futter (kg)</label>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Futter (kg) <span class="text-red-500">*</span></label>
                         <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editFutter" />
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Wasser (l)</label>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Wasser (l) <span class="text-red-500">*</span></label>
                         <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editWasser" />
                     </div>
                 </div>
@@ -207,7 +207,7 @@
                 </div>
 
                 <div class="space-y-1">
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Verluste</label>
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Verluste <span class="text-red-500">*</span></label>
                     <input type="number" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-500/20" @bind="editVerluste" />
                 </div>
 
@@ -271,14 +271,18 @@
                     <div class="rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-xs text-red-700">@saveMessage</div>
                 }
             </div>
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-wrap justify-end gap-3">
                 <button class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
                     @onclick="() => editingEntry = null">
                     Abbrechen
                 </button>
-                <button class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
+                <button class="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 shadow-sm transition-colors"
                     @onclick="SaveEntry">
                     Speichern
+                </button>
+                <button class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm transition-colors"
+                    @onclick="SubmitForApproval">
+                    Zur Freigabe
                 </button>
             </div>
         </div>
@@ -377,6 +381,47 @@
         };
 
         await EntryService.UpdateEntryAsync(updatedData, currentUser);
+
+        editingEntry = null;
+        await LoadEntriesAsync();
+    }
+
+    private async Task SubmitForApproval()
+    {
+        if (editingEntry == null || currentUser == null) return;
+
+        // Prüfen, ob alle benötigten Felder ausgefüllt sind
+        if (editEier1 == null || editFutter == null || editWasser == null || editVerluste == null)
+        {
+            saveMessage = "Bitte füllen Sie Eier 1. Wahl, Futter, Wasser und Verluste aus, um den Eintrag zur Freigabe einzureichen.";
+            return;
+        }
+
+        saveMessage = "";
+        
+        var updatedData = new DailyEntry
+        {
+            Id = editingEntry.Id,
+            Eier1Wahl = editEier1,
+            Eier2Wahl = editEier2,
+            FutterKg = editFutter,
+            WasserLiter = editWasser,
+            FutterlieferungKg = editFutterlieferung,
+            Verluste = editVerluste,
+            Eigewicht = editEigewicht,
+            Koerpergewicht = editKoerpergewicht,
+            Bemerkungen = editingEntry.Bemerkungen,
+            LichtVon = editingEntry.LichtVon,
+            LichtBis = editingEntry.LichtBis,
+            AuslaufzeitMorgensVon = editingEntry.AuslaufzeitMorgensVon,
+            AuslaufzeitMorgensBis = editingEntry.AuslaufzeitMorgensBis,
+            AuslaufzeitAbendsVon = editingEntry.AuslaufzeitAbendsVon,
+            AuslaufzeitAbendsBis = editingEntry.AuslaufzeitAbendsBis,
+            KontrollzeitenVon = editingEntry.KontrollzeitenVon,
+            KontrollzeitenBis = editingEntry.KontrollzeitenBis
+        };
+
+        await EntryService.UpdateAndSubmitEntryAsync(updatedData, currentUser);
 
         editingEntry = null;
         await LoadEntriesAsync();
