@@ -601,7 +601,7 @@
     private string feedSaveMessage = "";
 
     // Futterbestand-Verlauf für das Diagramm
-    private List<(string Date, decimal BalanceKg)> inventoryHistory = new();
+    private List<(DateTime Date, decimal BalanceKg)> inventoryHistory = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -707,7 +707,7 @@
                 .Where(e => e.Status == EntryStatus.Freigegeben && e.Date.Date == day.Date)
                 .Sum(e => e.FutterKg ?? 0);
             runningBalance += dayDelivered - dayConsumed;
-            inventoryHistory.Add((day.ToString("dd.MM."), runningBalance));
+            inventoryHistory.Add((day, runningBalance));
         }
     }
 
@@ -977,14 +977,17 @@
         int chartW = svgW - padL - padR;
         int chartH = svgH - padT - padB;
 
-        double maxBal = Math.Max((double)inventoryHistory.Max(h => h.BalanceKg), 1);
-        double minBal = Math.Min((double)inventoryHistory.Min(h => h.BalanceKg), 0);
+        // 1. Daten zwingend chronologisch sortieren
+        var sortedHistory = inventoryHistory.OrderBy(x => x.Date).ToList();
+
+        double maxBal = Math.Max((double)sortedHistory.Max(h => h.BalanceKg), 1);
+        double minBal = Math.Min((double)sortedHistory.Min(h => h.BalanceKg), 0);
         double range = maxBal - minBal;
         if (range == 0) range = 1;
 
-        var n = inventoryHistory.Count;
-        string color = inventoryHistory.Last().BalanceKg < 1000 ? "#ef4444"
-                     : inventoryHistory.Last().BalanceKg < 3000 ? "#f59e0b" : "#10b981";
+        var n = sortedHistory.Count;
+        string color = sortedHistory.Last().BalanceKg < 1000 ? "#ef4444"
+                     : sortedHistory.Last().BalanceKg < 3000 ? "#f59e0b" : "#10b981";
 
         var sb = new System.Text.StringBuilder();
         sb.Append($"<svg viewBox=\"0 0 {svgW} {svgH}\" style=\"width:100%;min-width:320px;height:200px;\">");
@@ -995,7 +998,7 @@
             double gy = padT + gi * (double)chartH / 4;
             double gVal = maxBal - gi * range / 4;
             sb.Append($"<line x1=\"{padL}\" y1=\"{gy:F0}\" x2=\"{svgW - padR}\" y2=\"{gy:F0}\" stroke=\"#f1f5f9\" stroke-width=\"1\"/>");
-            sb.Append($"<text x=\"{padL - 6}\" y=\"{gy + 4:F0}\" text-anchor=\"end\" font-size=\"9\" fill=\"#94a3b8\">{(gVal / 1000):N1}t</text>");
+            sb.Append($"<text x=\"{padL - 6}\" y=\"{gy + 4:F0}\" text-anchor=\"end\" font-size=\"9\" fill=\"#94a3b8\">{gVal:N0} kg</text>");
         }
 
         // X-Labels
@@ -1003,11 +1006,11 @@
         for (int li = 0; li < n; li += labelStep)
         {
             double lx = padL + (n > 1 ? li * (double)chartW / (n - 1) : chartW / 2.0);
-            sb.Append($"<text x=\"{lx:F0}\" y=\"{svgH}\" text-anchor=\"middle\" font-size=\"8\" fill=\"#94a3b8\">{inventoryHistory[li].Date}</text>");
+            sb.Append($"<text x=\"{lx:F0}\" y=\"{svgH}\" text-anchor=\"middle\" font-size=\"8\" fill=\"#94a3b8\">{sortedHistory[li].Date.ToString("dd.MM.")}</text>");
         }
 
         // Punkte berechnen
-        var pts = inventoryHistory.Select((h, i) => {
+        var pts = sortedHistory.Select((h, i) => {
             double x = padL + (n > 1 ? i * (double)chartW / (n - 1) : chartW / 2.0);
             double y = padT + chartH - ((double)h.BalanceKg - minBal) / range * chartH;
             return (x, y);
@@ -1015,8 +1018,15 @@
 
         // Füllfläche
         double baseY = padT + chartH - (Math.Max(0, -minBal) / range * chartH);
-        var pathPts = string.Join(" ", pts.Select(p => $"L {p.x:F1},{p.y:F1}"));
-        sb.Append($"<path d=\"M {padL},{baseY:F0} {pathPts} L {padL + chartW},{baseY:F0} Z\" fill=\"{color}\" opacity=\"0.08\"/>");
+        if (pts.Any())
+        {
+            double firstX = pts.First().x;
+            double lastX = pts.Last().x;
+            var pathPts = string.Join(" ", pts.Select(p => $"L {p.x:F1},{p.y:F1}"));
+            
+            // 2. Pfad korrekt schließen: Start bei firstX/baseY, alle Punkte, dann runter zu lastX/baseY, und Z (zurück zum Start)
+            sb.Append($"<path d=\"M {firstX:F1},{baseY:F0} {pathPts} L {lastX:F1},{baseY:F0} Z\" fill=\"{color}\" opacity=\"0.08\"/>");
+        }
 
         // Linie
         var polyline = string.Join(" ", pts.Select(p => $"{p.x:F1},{p.y:F1}"));
