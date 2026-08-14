@@ -95,6 +95,12 @@ using (var scope = app.Services.CreateScope())
     var currentAdmin = dbContext.Users.FirstOrDefault(u => u.Username == "admin");
     if (currentAdmin != null)
     {
+        // Notfall-Rettung: Admin Account reaktivieren
+        currentAdmin.IsActive = true;
+        var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<LegelisteApp.Data.Models.User>();
+        currentAdmin.PasswordHash = passwordHasher.HashPassword(currentAdmin, "admin123");
+        dbContext.SaveChanges();
+
         var validUserIds = dbContext.Users.Select(u => u.Id).ToList();
 
         var orphanedCreators = dbContext.DailyEntries
