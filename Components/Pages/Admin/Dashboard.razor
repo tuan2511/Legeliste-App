@@ -225,11 +225,21 @@
                                     @if (isAdmin)
                                     {
                                         bool isComplete = entry.Verluste.HasValue && entry.Eier1Wahl.HasValue && entry.FutterKg.HasValue && entry.WasserLiter.HasValue;
-                                        <button class="px-4 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all @(isComplete ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-slate-300 text-slate-500 cursor-not-allowed")" 
-                                                disabled="@(!isComplete)"
-                                                @onclick="() => ApproveEntry(entry)">
-                                            Freigeben
-                                        </button>
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <button class="p-1.5 rounded-md shadow-sm transition-all @(isComplete ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-slate-300 text-slate-500 cursor-not-allowed")" 
+                                                    disabled="@(!isComplete)"
+                                                    @onclick="() => ApproveEntry(entry)" title="Freigeben">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            </button>
+                                            <button class="p-1.5 rounded-md bg-rose-600 text-white shadow-sm transition-all hover:bg-rose-700" 
+                                                    @onclick="() => RejectEntryAsync(entry)" title="Ablehnen">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                            <button class="p-1.5 rounded-md bg-blue-600 text-white shadow-sm transition-all hover:bg-blue-700" 
+                                                    @onclick="() => StartEdit(entry)" title="Bearbeiten">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            </button>
+                                        </div>
                                     }
                                 </td>
                             </tr>
@@ -348,38 +358,118 @@
     <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
         <div class="w-full max-w-lg rounded-xl bg-white shadow-2xl overflow-hidden border border-slate-200">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-slate-900">Eintrag bearbeiten</h3>
-                <button @onclick="() => editingEntry = null" class="text-slate-400 hover:text-slate-600">✕</button>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Eintrag bearbeiten</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">@editingEntry.Date.ToShortDateString() – @editingEntry.Stall?.Name</p>
+                </div>
+                <button @onclick="() => editingEntry = null" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
-            <div class="p-6 space-y-4">
+            <div class="p-6 overflow-y-auto max-h-[70vh] space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="text-xs font-bold text-slate-500 uppercase">Eier 1. Wahl</label>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eier 1. Wahl</label>
                         <input type="number" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.Eier1Wahl" />
                     </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eier 2. Wahl</label>
+                        <input type="number" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.Eier2Wahl" />
+                    </div>
                 </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="text-xs font-bold text-slate-500 uppercase">Futter (kg)</label>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Futter (kg)</label>
                         <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.FutterKg" />
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs font-bold text-slate-500 uppercase">Wasser (L)</label>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Wasser (l)</label>
                         <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.WasserLiter" />
                     </div>
                 </div>
+
                 <div class="space-y-1">
-                    <label class="text-xs font-bold text-slate-500 uppercase">Futterlieferung (kg)</label>
-                    <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.FutterlieferungKg" placeholder="Optional" />
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Futterlieferung (optional, in kg)</label>
+                    <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 border-blue-200 bg-blue-50/30" @bind="editingEntry.FutterlieferungKg" />
                 </div>
+
                 <div class="space-y-1">
-                    <label class="text-xs font-bold text-slate-500 uppercase">Bemerkungen</label>
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Verluste</label>
+                    <input type="number" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-500/20" @bind="editingEntry.Verluste" />
+                </div>
+
+                <div class="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Licht Von</label>
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.LichtVon" @onchange="@(e => editingEntry.LichtVon = e.Value?.ToString())" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Licht Bis</label>
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.LichtBis" @onchange="@(e => editingEntry.LichtBis = e.Value?.ToString())" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Auslauf Morgens Von</label>
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.AuslaufzeitMorgensVon" @onchange="@(e => editingEntry.AuslaufzeitMorgensVon = e.Value?.ToString())" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Morgens Bis</label>
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.AuslaufzeitMorgensBis" @onchange="@(e => editingEntry.AuslaufzeitMorgensBis = e.Value?.ToString())" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Auslauf Abends Von</label>
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.AuslaufzeitAbendsVon" @onchange="@(e => editingEntry.AuslaufzeitAbendsVon = e.Value?.ToString())" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Abends Bis</label>
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.AuslaufzeitAbendsBis" @onchange="@(e => editingEntry.AuslaufzeitAbendsBis = e.Value?.ToString())" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kontrollzeiten Von</label>
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.KontrollzeitenVon" @onchange="@(e => editingEntry.KontrollzeitenVon = e.Value?.ToString())" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kontrollzeiten Bis</label>
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.KontrollzeitenBis" @onchange="@(e => editingEntry.KontrollzeitenBis = e.Value?.ToString())" />
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eigewicht (g)</label>
+                        <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.Eigewicht" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Körpergewicht (g)</label>
+                        <input type="number" step="0.1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.Koerpergewicht" />
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Bemerkungen</label>
                     <textarea class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" rows="3" @bind="editingEntry.Bemerkungen"></textarea>
                 </div>
             </div>
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                <button class="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900" @onclick="() => editingEntry = null">Abbrechen</button>
-                <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" @onclick="SaveEdit">Speichern</button>
+                <button class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                    @onclick="() => editingEntry = null">
+                    Abbrechen
+                </button>
+                <button class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
+                    @onclick="SaveEdit">
+                    Speichern
+                </button>
             </div>
         </div>
     </div>
@@ -611,7 +701,17 @@
             Eier1Wahl = entry.Eier1Wahl, Eier2Wahl = entry.Eier2Wahl,
             FutterKg = entry.FutterKg, WasserLiter = entry.WasserLiter,
             FutterlieferungKg = entry.FutterlieferungKg,
-            Bemerkungen = entry.Bemerkungen
+            Bemerkungen = entry.Bemerkungen,
+            LichtVon = entry.LichtVon,
+            LichtBis = entry.LichtBis,
+            AuslaufzeitMorgensVon = entry.AuslaufzeitMorgensVon,
+            AuslaufzeitMorgensBis = entry.AuslaufzeitMorgensBis,
+            AuslaufzeitAbendsVon = entry.AuslaufzeitAbendsVon,
+            AuslaufzeitAbendsBis = entry.AuslaufzeitAbendsBis,
+            KontrollzeitenVon = entry.KontrollzeitenVon,
+            KontrollzeitenBis = entry.KontrollzeitenBis,
+            Eigewicht = entry.Eigewicht,
+            Koerpergewicht = entry.Koerpergewicht
         };
     }
 
@@ -630,6 +730,16 @@
             dbEntry.FutterlieferungKg = editingEntry.FutterlieferungKg;
             dbEntry.ZugaengeTiere = editingEntry.ZugaengeTiere;
             dbEntry.Bemerkungen = editingEntry.Bemerkungen;
+            dbEntry.LichtVon = editingEntry.LichtVon;
+            dbEntry.LichtBis = editingEntry.LichtBis;
+            dbEntry.AuslaufzeitMorgensVon = editingEntry.AuslaufzeitMorgensVon;
+            dbEntry.AuslaufzeitMorgensBis = editingEntry.AuslaufzeitMorgensBis;
+            dbEntry.AuslaufzeitAbendsVon = editingEntry.AuslaufzeitAbendsVon;
+            dbEntry.AuslaufzeitAbendsBis = editingEntry.AuslaufzeitAbendsBis;
+            dbEntry.KontrollzeitenVon = editingEntry.KontrollzeitenVon;
+            dbEntry.KontrollzeitenBis = editingEntry.KontrollzeitenBis;
+            dbEntry.Eigewicht = editingEntry.Eigewicht;
+            dbEntry.Koerpergewicht = editingEntry.Koerpergewicht;
             await context.SaveChangesAsync();
         }
         editingEntry = null;
@@ -714,6 +824,21 @@
             await context.SaveChangesAsync();
 
             // Nach dem Speichern Daten neu laden, um die UI (Tabs) zu aktualisieren
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task RejectEntryAsync(DailyEntry entry)
+    {
+        if (currentUserId == 0) return;
+
+        using var context = await DbFactory.CreateDbContextAsync();
+        var dbEntry = await context.DailyEntries.FindAsync(entry.Id);
+        if (dbEntry != null)
+        {
+            dbEntry.Status = EntryStatus.Entwurf;
+            dbEntry.ApprovedById = null;
+            await context.SaveChangesAsync();
             await LoadDataAsync();
         }
     }
