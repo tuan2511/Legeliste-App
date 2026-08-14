@@ -3,7 +3,7 @@
 @using LegelisteApp.Data.Models
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
-@attribute [Authorize(Roles = "Admin, Mitarbeiter")]
+@attribute [Authorize(Roles = "Admin, Mitarbeiter, Praktikant")]
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject NavigationManager Nav
 @rendermode InteractiveServer
@@ -13,8 +13,8 @@
 <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
     <div class="flex h-16 items-center justify-between px-6">
         <div>
-            <h1 class="text-lg font-semibold text-slate-900">Vollständigkeits-Check</h1>
-            <p class="text-sm text-slate-500">Überblick der Datenerfassung pro Stall</p>
+            <h1 class="text-lg font-semibold text-slate-900">Operative Daten</h1>
+            <p class="text-sm text-slate-500">Vollständigkeits-Check der Datenerfassung pro Stall</p>
         </div>
         <div class="flex items-center gap-4">
             <select @bind="selectedStallId" @bind:after="LoadCalendarData" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20">
@@ -53,9 +53,10 @@
             </button>
         </div>
         <div class="flex gap-4 text-xs font-medium">
-            <div class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-emerald-500"></span> Erfasst</div>
-            <div class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-rose-500"></span> Fehlt</div>
-            <div class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-slate-200"></span> Zukünftig</div>
+            <div class="flex items-center gap-1.5"><div class="block h-3 w-3 rounded-full bg-emerald-500"></div> Erfasst</div>
+            <div class="flex items-center gap-1.5"><div class="block h-3 w-3 rounded-full bg-amber-500"></div> Angefangen</div>
+            <div class="flex items-center gap-1.5"><div class="block h-3 w-3 rounded-full bg-rose-500"></div> Fehlt</div>
+            <div class="flex items-center gap-1.5"><div class="block h-3 w-3 rounded-full bg-slate-200"></div> Zukünftig</div>
         </div>
     </div>
 
@@ -84,9 +85,10 @@
             {
                 var isCompleted = completedDates.Contains(date.Date);
                 var isFuture = date.Date > DateTime.Today;
-                var isMissing = !isCompleted && !isFuture;
+                var isDraft = !isCompleted && !isFuture && existingEntries.ContainsKey(date.Date);
+                var isMissing = !isCompleted && !isFuture && !isDraft;
 
-                <div class="relative bg-white p-2 h-16 sm:h-32 group transition-all @(isMissing ? "hover:bg-rose-50 cursor-pointer" : "")"
+                <div class="relative bg-white p-2 h-16 sm:h-32 group transition-all @((isMissing || isDraft) ? (isDraft ? "hover:bg-amber-50 cursor-pointer" : "hover:bg-rose-50 cursor-pointer") : "")"
                      @onclick="() => OnDayClick(date)">
                     <span class="text-xs sm:text-sm font-semibold @(isFuture ? "text-slate-300" : "text-slate-600")">
                         @date.Day
@@ -97,6 +99,13 @@
                         {
                             <div class="flex items-center justify-center rounded-lg bg-emerald-50 py-1 sm:py-2 text-emerald-600">
                                 <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                        }
+                        else if (isDraft)
+                        {
+                            <div class="flex flex-col items-center justify-center rounded-lg bg-amber-50 py-1 sm:py-2 text-amber-600 transition-transform group-hover:scale-105">
+                                <svg class="h-4 w-4 sm:h-5 sm:w-5 sm:mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <span class="hidden sm:inline text-[10px] font-bold uppercase">Angefangen</span>
                             </div>
                         }
                         else if (isMissing)
@@ -120,6 +129,7 @@
     private int selectedStallId;
     private List<Stall> stalls = new();
     private HashSet<DateTime> completedDates = new();
+    private Dictionary<DateTime, int> existingEntries = new();
     private List<DateTime> days = new();
     private int firstDayOffset;
     private bool isLoading = true;
@@ -143,10 +153,11 @@
         using var context = await DbFactory.CreateDbContextAsync();
         var entries = await context.DailyEntries
             .Where(e => e.StallId == selectedStallId && e.Date >= start && e.Date < end)
-            .Select(e => e.Date.Date)
+            .Select(e => new { e.Id, e.Date, IsCompleted = (e.Status == EntryStatus.Freigegeben) })
             .ToListAsync();
 
-        completedDates = new HashSet<DateTime>(entries);
+        existingEntries = entries.ToDictionary(e => e.Date.Date, e => e.Id);
+        completedDates = new HashSet<DateTime>(entries.Where(e => e.IsCompleted).Select(e => e.Date.Date));
         GenerateCalendarGrid();
     }
 
@@ -178,9 +189,16 @@
 
     private void OnDayClick(DateTime date)
     {
-        if (date.Date > DateTime.Today || completedDates.Contains(date.Date)) return;
-
-        // Redirect zum Wizard mit Parametern
-        Nav.NavigateTo($"/datenerfassung?PreDate={date.ToString("yyyy-MM-dd")}&PreStall={selectedStallId}");
+        if (date.Date <= DateTime.Today && !completedDates.Contains(date.Date))
+        {
+            if (existingEntries.TryGetValue(date.Date, out int existingId))
+            {
+                Nav.NavigateTo($"/aktuelle-eintraege?editId={existingId}");
+            }
+            else
+            {
+                Nav.NavigateTo($"/datenerfassung?PreDate={date.ToString("yyyy-MM-dd")}&PreStall={selectedStallId}");
+            }
+        }
     }
 }

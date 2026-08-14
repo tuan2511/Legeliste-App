@@ -12,6 +12,8 @@ public class DailyEntry
     [DataType(DataType.Date)]
     public DateTime Date { get; set; }
 
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+
     [Required]
     public int StallId { get; set; }
     
@@ -32,20 +34,17 @@ public class DailyEntry
     [ForeignKey(nameof(ApprovedById))]
     public User? ApprovedBy { get; set; }
 
-    [Required]
-    public int Verluste { get; set; }
+    public int? Verluste { get; set; }
     
-    [Required]
-    public int Eier1Wahl { get; set; }
+    public int? Eier1Wahl { get; set; }
     
-    [Required]
-    public int Eier2Wahl { get; set; }
+    public int? Eier2Wahl { get; set; }
     
     [Column(TypeName = "decimal(18,2)")]
-    public decimal FutterKg { get; set; }
+    public decimal? FutterKg { get; set; }
     
     [Column(TypeName = "decimal(18,2)")]
-    public decimal WasserLiter { get; set; }
+    public decimal? WasserLiter { get; set; }
 
     [Column(TypeName = "decimal(18,2)")]
     public decimal? FutterlieferungKg { get; set; }
@@ -54,7 +53,16 @@ public class DailyEntry
     public string? Bemerkungen { get; set; }
     
     [MaxLength(50)]
-    public string? Auslaufzeit { get; set; }
+    public string? AuslaufzeitMorgensVon { get; set; }
+    
+    [MaxLength(50)]
+    public string? AuslaufzeitMorgensBis { get; set; }
+    
+    [MaxLength(50)]
+    public string? AuslaufzeitAbendsVon { get; set; }
+    
+    [MaxLength(50)]
+    public string? AuslaufzeitAbendsBis { get; set; }
     
     public string? LichtVon { get; set; }
     
@@ -71,4 +79,9 @@ public class DailyEntry
     
     [MaxLength(20)]
     public string? KontrollzeitenBis { get; set; }
+
+    [DataType(DataType.Date)]
+    public DateTime? FutterWasserZyklusBis { get; set; }
+
+    public bool IstAusgestallt { get; set; } = false;
 }

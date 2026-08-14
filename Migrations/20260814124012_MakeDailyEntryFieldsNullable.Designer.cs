@@ -4,6 +4,7 @@ using LegelisteApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LegelisteApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260814124012_MakeDailyEntryFieldsNullable")]
+    partial class MakeDailyEntryFieldsNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -135,7 +138,7 @@ namespace LegelisteApp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("AmountKg")
+                    b.Property<decimal>("AmountTons")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("Date")
@@ -145,7 +148,7 @@ namespace LegelisteApp.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<int?>("StallId")
+                    b.Property<int>("StallId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -239,7 +242,9 @@ namespace LegelisteApp.Migrations
                 {
                     b.HasOne("LegelisteApp.Data.Models.Stall", "Stall")
                         .WithMany()
-                        .HasForeignKey("StallId");
+                        .HasForeignKey("StallId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Stall");
                 });

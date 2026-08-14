@@ -122,9 +122,9 @@
                 var week = ageWeeks + 18;
                 
                 var flockSize = dsStall.AnfangsbestandTiere - netLosses;
-                var layRate = (double)CalcService.CalculateLayingPerformance(e.Eier1Wahl + e.Eier2Wahl, flockSize);
+                var layRate = (double)CalcService.CalculateLayingPerformance((e.Eier1Wahl ?? 0) + (e.Eier2Wahl ?? 0), flockSize);
                 
-                netLosses += (e.Verluste - (e.ZugaengeTiere ?? 0));
+                netLosses += ((e.Verluste ?? 0) - (e.ZugaengeTiere ?? 0));
                 var lossPct = (double)netLosses / dsStall.AnfangsbestandTiere * 100;
 
                 return new { Week = week, LayRate = layRate, Weight = (double?)(e.Eigewicht > 0 ? (double)e.Eigewicht : null), LossPct = lossPct };

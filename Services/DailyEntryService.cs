@@ -16,8 +16,7 @@ public class DailyEntryService
 
     public async Task UpdateEntryAsync(DailyEntry updatedData, ClaimsPrincipal user)
     {
-        if (user.IsInRole("Praktikant"))
-            throw new UnauthorizedAccessException("Praktikanten dürfen keine Daten ändern.");
+
 
         if (updatedData.Date.Date > DateTime.Today)
             throw new InvalidOperationException("Datum darf nicht in der Zukunft liegen!");
@@ -37,14 +36,60 @@ public class DailyEntryService
         dbEntry.Eigewicht = updatedData.Eigewicht;
         dbEntry.Koerpergewicht = updatedData.Koerpergewicht;
         dbEntry.Bemerkungen = updatedData.Bemerkungen;
+        dbEntry.LichtVon = updatedData.LichtVon;
+        dbEntry.LichtBis = updatedData.LichtBis;
+        dbEntry.AuslaufzeitMorgensVon = updatedData.AuslaufzeitMorgensVon;
+        dbEntry.AuslaufzeitMorgensBis = updatedData.AuslaufzeitMorgensBis;
+        dbEntry.AuslaufzeitAbendsVon = updatedData.AuslaufzeitAbendsVon;
+        dbEntry.AuslaufzeitAbendsBis = updatedData.AuslaufzeitAbendsBis;
+        dbEntry.KontrollzeitenVon = updatedData.KontrollzeitenVon;
+        dbEntry.KontrollzeitenBis = updatedData.KontrollzeitenBis;
 
-        // Sicherheitsregel: Wenn Mitarbeiter bearbeitet -> Status zurück auf Wartend
+        // Sicherheitsregel: Wenn Mitarbeiter bearbeitet und es war bereits freigegeben, wird es zurückgesetzt (oder es bleibt Entwurf/Wartend)
         bool isAdmin = user.IsInRole("Admin");
-        if (!isAdmin)
+        if (!isAdmin && dbEntry.Status == EntryStatus.Freigegeben)
         {
             dbEntry.Status = EntryStatus.WartetAufFreigabe;
             dbEntry.ApprovedById = null; // Bestehende Freigabe löschen
         }
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task UpdateAndSubmitEntryAsync(DailyEntry updatedData, ClaimsPrincipal user)
+    {
+
+
+        if (updatedData.Date.Date > DateTime.Today)
+            throw new InvalidOperationException("Datum darf nicht in der Zukunft liegen!");
+
+        using var context = await _dbFactory.CreateDbContextAsync();
+        var dbEntry = await context.DailyEntries.FindAsync(updatedData.Id);
+        
+        if (dbEntry == null) return;
+
+        // Felder aktualisieren
+        dbEntry.Eier1Wahl = updatedData.Eier1Wahl;
+        dbEntry.Eier2Wahl = updatedData.Eier2Wahl;
+        dbEntry.FutterKg = updatedData.FutterKg;
+        dbEntry.WasserLiter = updatedData.WasserLiter;
+        dbEntry.FutterlieferungKg = updatedData.FutterlieferungKg;
+        dbEntry.Verluste = updatedData.Verluste;
+        dbEntry.Eigewicht = updatedData.Eigewicht;
+        dbEntry.Koerpergewicht = updatedData.Koerpergewicht;
+        dbEntry.Bemerkungen = updatedData.Bemerkungen;
+        dbEntry.LichtVon = updatedData.LichtVon;
+        dbEntry.LichtBis = updatedData.LichtBis;
+        dbEntry.AuslaufzeitMorgensVon = updatedData.AuslaufzeitMorgensVon;
+        dbEntry.AuslaufzeitMorgensBis = updatedData.AuslaufzeitMorgensBis;
+        dbEntry.AuslaufzeitAbendsVon = updatedData.AuslaufzeitAbendsVon;
+        dbEntry.AuslaufzeitAbendsBis = updatedData.AuslaufzeitAbendsBis;
+        dbEntry.KontrollzeitenVon = updatedData.KontrollzeitenVon;
+        dbEntry.KontrollzeitenBis = updatedData.KontrollzeitenBis;
+
+        // Status explizit auf WartetAufFreigabe setzen
+        dbEntry.Status = EntryStatus.WartetAufFreigabe;
+        dbEntry.ApprovedById = null;
 
         await context.SaveChangesAsync();
     }

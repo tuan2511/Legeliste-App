@@ -1,0 +1,237 @@
+@page "/futtermittel-lieferungen"
+@using LegelisteApp.Data
+@using LegelisteApp.Data.Models
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject IDbContextFactory<AppDbContext> DbFactory
+@rendermode InteractiveServer
+
+<PageTitle>Futterlieferungen - LegelisteApp</PageTitle>
+
+<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div class="flex h-16 items-center justify-between px-6">
+        <div>
+            <h1 class="text-lg font-semibold text-slate-900">Futterlieferungen</h1>
+            <p class="text-sm text-slate-500">Externe Futtermittelzulieferungen erfassen</p>
+        </div>
+    </div>
+</header>
+
+<div class="grid gap-6 p-6 lg:grid-cols-12">
+    @if (isLoading)
+    {
+        <div class="lg:col-span-12 flex h-[50vh] items-center justify-center">
+            <div class="flex flex-col items-center gap-3">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+                <p class="text-sm font-medium text-slate-500">Daten werden geladen...</p>
+            </div>
+        </div>
+    }
+    else
+    {
+    <!-- Neue Lieferung erfassen -->
+    <div class="lg:col-span-4">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+                <h3 class="text-base font-semibold text-slate-900">🚛 Neue Lieferung erfassen</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="rounded-lg bg-red-50 p-3 text-xs font-medium text-red-800 border border-red-100">@errorMessage</div>
+                }
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="rounded-lg bg-emerald-50 p-3 text-xs font-medium text-emerald-800 border border-emerald-100">@successMessage</div>
+                }
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Datum</label>
+                    <input type="date" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                           @bind="newDelivery.Date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Menge (kg) <span class="text-red-500">*</span></label>
+                    <input type="number" step="1" min="1" placeholder="z.B. 2000"
+                           class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                           @bind="newDelivery.AmountKg" />
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Stall (optional)</label>
+                    <select class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                            @bind="newDelivery.StallId">
+                        <option value="">Alle Ställe (globale Lieferung)</option>
+                        @foreach (var s in stalls)
+                        {
+                            <option value="@s.Id">@s.Name</option>
+                        }
+                    </select>
+                    <p class="text-[10px] text-slate-400">Leer lassen = Lieferung gilt global für alle Ställe</p>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Notiz (optional)</label>
+                    <input type="text" placeholder="z.B. Lieferant, Fahrzeug..." maxlength="500"
+                           class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                           @bind="newDelivery.Notes" />
+                </div>
+
+                <button class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                        @onclick="SaveDelivery">
+                    Lieferung speichern
+                </button>
+            </div>
+        </div>
+
+        <!-- Gesamtübersicht -->
+        <div class="mt-4 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+                <h3 class="text-sm font-semibold text-slate-900">📊 Gesamtbilanz</h3>
+            </div>
+            <div class="p-6 grid grid-cols-2 gap-4 text-center">
+                <div>
+                    <div class="text-2xl font-bold text-emerald-600">@totalDelivered.ToString("N0")</div>
+                    <div class="text-xs text-slate-500 mt-0.5">kg geliefert</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold @(totalBalance < 1000 ? "text-red-600" : (totalBalance < 3000 ? "text-amber-600" : "text-slate-900"))">@totalBalance.ToString("N0")</div>
+                    <div class="text-xs text-slate-500 mt-0.5">kg Restbestand</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lieferungen Liste -->
+    <div class="lg:col-span-8">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-base font-semibold text-slate-900">Alle Lieferungen</h3>
+                <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">@deliveries.Count Einträge</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="bg-slate-50/80 text-slate-500 border-b border-slate-200 uppercase text-[10px] font-bold tracking-wider">
+                            <th class="px-5 py-3">Datum</th>
+                            <th class="px-5 py-3">Stall</th>
+                            <th class="px-5 py-3 text-right">Menge (kg)</th>
+                            <th class="px-5 py-3">Notiz</th>
+                            <th class="px-5 py-3 text-right">Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @if (!deliveries.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="px-5 py-10 text-center text-sm text-slate-400">Noch keine Lieferungen erfasst.</td>
+                            </tr>
+                        }
+                        @foreach (var d in deliveries)
+                        {
+                            var localD = d;
+                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                <td class="px-5 py-3 font-medium text-slate-900 whitespace-nowrap">@d.Date.ToShortDateString()</td>
+                                <td class="px-5 py-3 text-slate-600">
+                                    @if (d.Stall != null)
+                                    {
+                                        <span>@d.Stall.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-slate-400 italic">Global</span>
+                                    }
+                                </td>
+                                <td class="px-5 py-3 text-right font-mono font-semibold text-slate-900">@d.AmountKg.ToString("N0") kg</td>
+                                <td class="px-5 py-3 text-slate-500 text-xs max-w-[200px] truncate">@(d.Notes ?? "–")</td>
+                                <td class="px-5 py-3 text-right">
+                                    <button class="text-red-500 hover:text-red-700 p-1 transition-colors" title="Löschen"
+                                            @onclick="() => DeleteDelivery(localD.Id)">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+</div>
+
+@code {
+    private List<FeedDelivery> deliveries = new();
+    private List<Stall> stalls = new();
+    private FeedDelivery newDelivery = new() { Date = DateTime.Today, AmountKg = 0 };
+    private string errorMessage = "";
+    private string successMessage = "";
+    private bool isLoading = true;
+    private decimal totalDelivered = 0;
+    private decimal totalConsumed = 0;
+    private decimal totalBalance = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        await LoadDataAsync();
+        isLoading = false;
+    }
+
+    private async Task LoadDataAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        stalls = await context.Stalls.OrderBy(s => s.Name).ToListAsync();
+        deliveries = await context.FeedDeliveries
+            .Include(fd => fd.Stall)
+            .OrderByDescending(fd => fd.Date)
+            .ToListAsync();
+
+        totalDelivered = deliveries.Sum(d => d.AmountKg);
+        totalConsumed = await context.DailyEntries
+            .Where(e => e.Status == EntryStatus.Freigegeben)
+            .SumAsync(e => e.FutterKg ?? 0);
+        totalBalance = totalDelivered - totalConsumed;
+    }
+
+    private async Task SaveDelivery()
+    {
+        errorMessage = "";
+        successMessage = "";
+
+        if (newDelivery.AmountKg <= 0)
+        {
+            errorMessage = "Bitte geben Sie eine Menge größer als 0 ein.";
+            return;
+        }
+        if (newDelivery.Date > DateTime.Today)
+        {
+            errorMessage = "Datum darf nicht in der Zukunft liegen.";
+            return;
+        }
+
+        using var context = await DbFactory.CreateDbContextAsync();
+        context.FeedDeliveries.Add(newDelivery);
+        await context.SaveChangesAsync();
+
+        successMessage = $"✓ Lieferung über {newDelivery.AmountKg:N0} kg am {newDelivery.Date.ToShortDateString()} gespeichert.";
+        newDelivery = new FeedDelivery { Date = DateTime.Today, AmountKg = 0 };
+        await LoadDataAsync();
+    }
+
+    private async Task DeleteDelivery(int id)
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        var item = await context.FeedDeliveries.FindAsync(id);
+        if (item != null)
+        {
+            context.FeedDeliveries.Remove(item);
+            await context.SaveChangesAsync();
+            await LoadDataAsync();
+        }
+    }
+}

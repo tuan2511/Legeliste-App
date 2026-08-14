@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Admin")]
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
 <PageTitle>Stammtdaten: Benutzer</PageTitle>
@@ -99,6 +100,8 @@
                             <th class="px-6 py-3">ID</th>
                             <th class="px-6 py-3">Benutzername</th>
                             <th class="px-6 py-3">Rolle</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3 text-right">Aktionen</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -119,6 +122,23 @@
                                         @user.Role
                                     </span>
                                 </td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium @(user.IsActive ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")">
+                                        @(user.IsActive ? "Aktiv" : "Inaktiv")
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    @if (!user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        var localUser = user;
+                                        <button class="text-blue-500 hover:text-blue-700 p-1 transition-colors mr-2" @onclick="() => OpenEditModal(localUser)" title="Bearbeiten">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-700 p-1 transition-colors" @onclick="() => DeleteUser(localUser)" title="Löschen">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -129,6 +149,43 @@
     }
 </div>
 
+@if (editingUser != null)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="w-full max-w-sm rounded-xl bg-white shadow-2xl overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-base font-bold text-slate-900">Benutzer bearbeiten</h3>
+                <button @onclick="() => editingUser = null" class="p-1 text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Benutzername</label>
+                    <div class="font-medium text-slate-900">@editingUser.Username</div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Status</label>
+                    <div class="flex items-center gap-2 mt-2">
+                        <input type="checkbox" id="isActiveCheck" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50" @bind="editIsActive" disabled="@(editingUser.Username.Equals(currentUserName, StringComparison.OrdinalIgnoreCase))" />
+                        <label for="isActiveCheck" class="text-sm font-medium text-slate-700">Benutzer ist aktiv</label>
+                    </div>
+                </div>
+                
+                <div class="space-y-1 pt-4 border-t border-slate-100">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Passwort ändern (optional)</label>
+                    <input type="password" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editPassword" placeholder="Neues Passwort..." />
+                    <p class="text-xs text-slate-400 mt-1">Leer lassen, um das aktuelle Passwort zu behalten.</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors" @onclick="() => editingUser = null">Abbrechen</button>
+                <button class="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 shadow-sm transition-colors" @onclick="SaveEditedUser">Speichern</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<User> users = new();
     private User newUser = new() { Username = "", PasswordHash = "" };
@@ -137,9 +194,16 @@
     private string successMessage = "";
     private bool isLoading = true;
 
+    private User? editingUser;
+    private string editPassword = "";
+    private bool editIsActive = true;
+    private string currentUserName = "";
+
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserName = authState.User.Identity?.Name ?? "";
         await LoadUsersAsync();
         isLoading = false;
     }
@@ -183,5 +247,67 @@
         password = "";
         
         await LoadUsersAsync(); // Refresh list
+    }
+
+    private async Task DeleteUser(User user)
+    {
+        if (user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+        {
+            errorMessage = "Fehler: Der Administrator-Account ('admin') darf nicht gelöscht werden!";
+            successMessage = "";
+            return;
+        }
+
+        using var context = await DbFactory.CreateDbContextAsync();
+        var dbUser = await context.Users.FindAsync(user.Id);
+        if (dbUser != null)
+        {
+            context.Users.Remove(dbUser);
+            await context.SaveChangesAsync();
+            successMessage = $"Benutzer '{user.Username}' wurde gelöscht.";
+            errorMessage = "";
+            await LoadUsersAsync();
+        }
+    }
+
+    private void OpenEditModal(User user)
+    {
+        editingUser = user;
+        editIsActive = user.IsActive;
+        editPassword = "";
+        errorMessage = "";
+        successMessage = "";
+    }
+
+    private async Task SaveEditedUser()
+    {
+        if (editingUser == null) return;
+        
+        using var context = await DbFactory.CreateDbContextAsync();
+        var dbUser = await context.Users.FindAsync(editingUser.Id);
+        
+        if (dbUser != null)
+        {
+            if (dbUser.Username.Equals(currentUserName, StringComparison.OrdinalIgnoreCase) && !editIsActive)
+            {
+                errorMessage = "Sie können Ihren eigenen Account nicht deaktivieren!";
+                return;
+            }
+
+            dbUser.IsActive = editIsActive;
+            
+            if (!string.IsNullOrWhiteSpace(editPassword))
+            {
+                var passwordHasher = new PasswordHasher<User>();
+                dbUser.PasswordHash = passwordHasher.HashPassword(dbUser, editPassword);
+            }
+            
+            await context.SaveChangesAsync();
+            successMessage = $"Benutzer '{dbUser.Username}' wurde erfolgreich aktualisiert.";
+            errorMessage = "";
+            
+            editingUser = null;
+            await LoadUsersAsync();
+        }
     }
 }
