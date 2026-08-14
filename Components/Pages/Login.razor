@@ -108,7 +108,6 @@
                 {
                     string target = "/";
                     if (user.Role == LegelisteApp.Data.Models.UserRole.Admin) target = "/admin";
-                    else if (user.Role == LegelisteApp.Data.Models.UserRole.Praktikant) target = "/aktuelle-eintraege";
                     else target = "/datenerfassung";
 
                     NavigationManager.NavigateTo(target);
@@ -126,7 +125,6 @@
     private void RedirectBasedOnRole(ClaimsPrincipal user)
     {
         if (user.IsInRole("Admin")) NavigationManager.NavigateTo("/admin", forceLoad: true);
-        else if (user.IsInRole("Praktikant")) NavigationManager.NavigateTo("/aktuelle-eintraege", forceLoad: true);
         else NavigationManager.NavigateTo("/datenerfassung", forceLoad: true);
     }
 

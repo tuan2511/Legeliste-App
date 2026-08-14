@@ -3,7 +3,7 @@
 @using LegelisteApp.Data.Models
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
-@attribute [Authorize(Roles = "Admin, Mitarbeiter")]
+@attribute [Authorize(Roles = "Admin, Mitarbeiter, Praktikant")]
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject NavigationManager Nav
 @rendermode InteractiveServer

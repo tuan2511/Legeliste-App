@@ -16,8 +16,7 @@ public class DailyEntryService
 
     public async Task UpdateEntryAsync(DailyEntry updatedData, ClaimsPrincipal user)
     {
-        if (user.IsInRole("Praktikant"))
-            throw new UnauthorizedAccessException("Praktikanten dürfen keine Daten ändern.");
+
 
         if (updatedData.Date.Date > DateTime.Today)
             throw new InvalidOperationException("Datum darf nicht in der Zukunft liegen!");
@@ -59,8 +58,7 @@ public class DailyEntryService
 
     public async Task UpdateAndSubmitEntryAsync(DailyEntry updatedData, ClaimsPrincipal user)
     {
-        if (user.IsInRole("Praktikant"))
-            throw new UnauthorizedAccessException("Praktikanten dürfen keine Daten ändern.");
+
 
         if (updatedData.Date.Date > DateTime.Today)
             throw new InvalidOperationException("Datum darf nicht in der Zukunft liegen!");

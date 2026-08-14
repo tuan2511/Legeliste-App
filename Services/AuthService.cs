@@ -26,7 +26,7 @@ public class AuthService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var user = await context.Users.FirstOrDefaultAsync(u => u.Username == username);
 
-        if (user == null)
+        if (user == null || !user.IsActive)
             return false;
 
         var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
