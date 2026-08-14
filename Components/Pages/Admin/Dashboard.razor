@@ -973,11 +973,12 @@
 
     private string BuildInventoryChartSvg()
     {
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
         const int svgW = 800, svgH = 200, padL = 60, padR = 20, padT = 15, padB = 30;
         int chartW = svgW - padL - padR;
         int chartH = svgH - padT - padB;
 
-        // 1. Daten zwingend chronologisch sortieren & gruppieren
+        // Daten zwingend nach Kalendertag gruppieren, letzten Bestand nehmen, chronologisch sortieren
         var sortedHistory = inventoryHistory
             .GroupBy(x => x.Date.Date)
             .Select(g => (Date: g.Key, BalanceKg: g.Last().BalanceKg))
@@ -995,68 +996,71 @@
         string color = sortedHistory.Last().BalanceKg < 1000 ? "#ef4444"
                      : sortedHistory.Last().BalanceKg < 3000 ? "#f59e0b" : "#10b981";
 
+        double minDateTicks = sortedHistory.First().Date.Ticks;
+        double maxDateTicks = sortedHistory.Last().Date.Ticks;
+        double dateRange = maxDateTicks - minDateTicks;
+        if (dateRange == 0) dateRange = 1;
+
         var sb = new System.Text.StringBuilder();
         sb.Append($"<svg viewBox=\"0 0 {svgW} {svgH}\" style=\"width:100%;min-width:320px;height:200px;\">");
 
-        // Gitter + Y-Labels
+        // Gitter + Y-Labels (Integer-Koordinaten, kein Dezimalproblem)
         for (int gi = 0; gi <= 4; gi++)
         {
-            double gy = padT + gi * (double)chartH / 4;
+            int gy = (int)Math.Round(padT + gi * (double)chartH / 4);
             double gVal = maxBal - gi * range / 4;
-            sb.Append($"<line x1=\"{padL}\" y1=\"{gy:F0}\" x2=\"{svgW - padR}\" y2=\"{gy:F0}\" stroke=\"#f1f5f9\" stroke-width=\"1\"/>");
-            sb.Append($"<text x=\"{padL - 6}\" y=\"{gy + 4:F0}\" text-anchor=\"end\" font-size=\"9\" fill=\"#94a3b8\">{gVal:N0} kg</text>");
+            sb.Append($"<line x1=\"{padL}\" y1=\"{gy}\" x2=\"{svgW - padR}\" y2=\"{gy}\" stroke=\"#f1f5f9\" stroke-width=\"1\"/>");
+            sb.Append($"<text x=\"{padL - 6}\" y=\"{gy + 4}\" text-anchor=\"end\" font-size=\"9\" fill=\"#94a3b8\">{gVal.ToString("N0", ic)} kg</text>");
         }
 
-        double minDate = sortedHistory.First().Date.Ticks;
-        double maxDate = sortedHistory.Last().Date.Ticks;
-        double dateRange = maxDate - minDate;
-        if (dateRange == 0) dateRange = 1;
-
-        // X-Labels
+        // X-Labels (Integer-Koordinaten)
         int labelStep = Math.Max(1, n / 6);
         for (int li = 0; li < n; li += labelStep)
         {
-            double lx = padL + (n > 1 ? (sortedHistory[li].Date.Ticks - minDate) / dateRange * chartW : chartW / 2.0);
-            sb.Append($"<text x=\"{lx:F0}\" y=\"{svgH}\" text-anchor=\"middle\" font-size=\"8\" fill=\"#94a3b8\">{sortedHistory[li].Date.ToString("dd.MM.")}</text>");
+            int lx = (int)Math.Round(padL + (n > 1 ? (sortedHistory[li].Date.Ticks - minDateTicks) / dateRange * chartW : chartW / 2.0));
+            sb.Append($"<text x=\"{lx}\" y=\"{svgH}\" text-anchor=\"middle\" font-size=\"8\" fill=\"#94a3b8\">{sortedHistory[li].Date.ToString("dd.MM.", ic)}</text>");
         }
 
-        // Punkte berechnen
-        var pts = sortedHistory.Select((h, i) => {
-            double x = padL + (n > 1 ? (h.Date.Ticks - minDate) / dateRange * chartW : chartW / 2.0);
-            double y = padT + chartH - ((double)h.BalanceKg - minBal) / range * chartH;
-            return (x, y);
+        // Punkte berechnen – Koordinaten als InvariantCulture-Strings speichern
+        var pts = sortedHistory.Select(h => {
+            double xd = padL + (n > 1 ? (h.Date.Ticks - minDateTicks) / dateRange * chartW : chartW / 2.0);
+            double yd = padT + chartH - ((double)h.BalanceKg - minBal) / range * chartH;
+            return (xs: xd.ToString("F1", ic), ys: yd.ToString("F1", ic));
         }).ToList();
 
-        // Füllfläche
-        double baseY = padT + chartH - (Math.Max(0, -minBal) / range * chartH);
+        // Baseline-Y (InvariantCulture)
+        double baseYd = padT + chartH - (Math.Max(0, -minBal) / range * chartH);
+        string baseYs = baseYd.ToString("F0", ic);
+
         if (pts.Any())
         {
-            double firstX = pts.First().x;
-            double lastX = pts.Last().x;
-            var pathPts = string.Join(" ", pts.Skip(1).Select(p => $"L {p.x:F1},{p.y:F1}"));
-            
-            // 2. Pfad exakt schließen
-            sb.Append($"<path d=\"M {pts[0].x:F1},{pts[0].y:F1} {pathPts} L {lastX:F1},{baseY:F0} L {firstX:F1},{baseY:F0} Z\" fill=\"{color}\" opacity=\"0.08\"/>");
+            string firstXs = pts.First().xs;
+            string lastXs = pts.Last().xs;
+
+            // Pfad 1: NUR Füllung (geschlossener Bereich, kein Stroke)
+            var fillPts = string.Join(" ", pts.Skip(1).Select(p => $"L {p.xs},{p.ys}"));
+            sb.Append($"<path d=\"M {pts[0].xs},{pts[0].ys} {fillPts} L {lastXs},{baseYs} L {firstXs},{baseYs} Z\" fill=\"{color}\" stroke=\"none\" opacity=\"0.1\"/>");
+
+            // Pfad 2: NUR Linie (offener Pfad, kein Fill)
+            var linePts = string.Join(" ", pts.Skip(1).Select(p => $"L {p.xs},{p.ys}"));
+            sb.Append($"<path d=\"M {pts[0].xs},{pts[0].ys} {linePts}\" fill=\"none\" stroke=\"{color}\" stroke-width=\"2\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/>");
+
+            // Endpunkt-Kreis
+            sb.Append($"<circle cx=\"{pts.Last().xs}\" cy=\"{pts.Last().ys}\" r=\"4\" fill=\"{color}\"/>");
         }
 
-        // Linie
-        var polyline = string.Join(" ", pts.Select(p => $"{p.x:F1},{p.y:F1}"));
-        sb.Append($"<polyline points=\"{polyline}\" fill=\"none\" stroke=\"{color}\" stroke-width=\"2\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/>");
-
-        // Endpunkt
-        if (pts.Any())
-            sb.Append($"<circle cx=\"{pts.Last().x:F1}\" cy=\"{pts.Last().y:F1}\" r=\"4\" fill=\"{color}\"/>");
-
-        // Nulllinie (falls negativ)
+        // Nulllinie (falls Bestand negativ werden kann)
         if (minBal < 0)
         {
-            double zeroY = padT + chartH - (0 - minBal) / range * chartH;
-            sb.Append($"<line x1=\"{padL}\" y1=\"{zeroY:F0}\" x2=\"{svgW - padR}\" y2=\"{zeroY:F0}\" stroke=\"#ef4444\" stroke-width=\"1\" stroke-dasharray=\"4,3\"/>");
+            double zeroYd = padT + chartH - (0 - minBal) / range * chartH;
+            string zeroYs = zeroYd.ToString("F0", ic);
+            sb.Append($"<line x1=\"{padL}\" y1=\"{zeroYs}\" x2=\"{svgW - padR}\" y2=\"{zeroYs}\" stroke=\"#ef4444\" stroke-width=\"1\" stroke-dasharray=\"4,3\"/>");
         }
 
         sb.Append("</svg>");
         return sb.ToString();
     }
+
 
     private class StallStatistic
     {
