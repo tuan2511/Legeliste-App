@@ -101,6 +101,21 @@ window.renderPerformanceCurve = (canvasId, labels, datasets) => {
         norm: '#cbd5e1' // Zurückhaltendes Grau
     };
 
+    // Fokus-Modus: Finde den höchsten Index mit echten Daten
+    let maxActualIndex = 0;
+    datasets.forEach(ds => {
+        if (!ds.type.includes('Norm')) {
+            for (let i = ds.data.length - 1; i >= 0; i--) {
+                if (ds.data[i] !== null && ds.data[i] !== undefined) {
+                    maxActualIndex = Math.max(maxActualIndex, i);
+                    break;
+                }
+            }
+        }
+    });
+    // +4 Wochen Puffer in die Zukunft, aber maximal bis zum Ende der Labels
+    let maxXLimitIndex = Math.min(labels.length - 1, maxActualIndex + 4);
+
     const formattedDatasets = datasets.map(ds => {
         let borderColor = '#94a3b8';
         let backgroundColor = 'transparent';
@@ -123,13 +138,13 @@ window.renderPerformanceCurve = (canvasId, labels, datasets) => {
             data: ds.data,
             borderColor: borderColor,
             backgroundColor: backgroundColor,
-            borderWidth: isNorm ? 2 : 3,
+            borderWidth: isNorm ? 2 : 4,
             borderDash: borderDash,
-            pointRadius: isNorm ? 0 : 4,
+            pointRadius: isNorm ? 0 : 6,
             pointBackgroundColor: borderColor,
             pointBorderColor: '#ffffff',
             pointBorderWidth: 2,
-            pointHoverRadius: 6,
+            pointHoverRadius: 8,
             yAxisID: yAxisID,
             tension: 0.4, // Weiche, abgerundete Kurven (Bezier)
             fill: fill
@@ -171,6 +186,9 @@ window.renderPerformanceCurve = (canvasId, labels, datasets) => {
                     titleFont: { family: "'Inter', sans-serif", size: 13, weight: 'bold' },
                     bodyFont: { family: "'Inter', sans-serif", size: 12, weight: '500' },
                     callbacks: {
+                        title: function(context) {
+                            return 'Woche ' + context[0].label;
+                        },
                         label: function(context) {
                             let label = context.dataset.label || '';
                             if (label) {
@@ -210,6 +228,7 @@ window.renderPerformanceCurve = (canvasId, labels, datasets) => {
                     ticks: { font: { family: "'Inter', sans-serif", size: 11 }, color: '#94a3b8', padding: 8 }
                 },
                 x: {
+                    max: labels[maxXLimitIndex],
                     title: { display: false },
                     grid: { display: false }, // Kein vertikales Raster
                     border: { display: false },
