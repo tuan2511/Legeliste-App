@@ -191,11 +191,11 @@
                                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div class="space-y-1.5">
                                         <span class="text-xs text-slate-500">1. Kontrolle</span>
-                                        <InputText @bind-Value="model.KontrollzeitenVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 07:00" />
+                                        <InputText type="time" @bind-Value="model.KontrollzeitenVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 07:00" />
                                     </div>
                                     <div class="space-y-1.5">
                                         <span class="text-xs text-slate-500">2. Kontrolle</span>
-                                        <InputText @bind-Value="model.KontrollzeitenBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 16:00" />
+                                        <InputText type="time" @bind-Value="model.KontrollzeitenBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 16:00" />
                                     </div>
                                 </div>
                             </div>
@@ -208,19 +208,19 @@
                                 <div class="grid grid-cols-2 gap-4 mt-2">
                                     <div>
                                         <label class="block text-xs font-medium text-slate-500 mb-1">Morgens von</label>
-                                        <InputText @bind-Value="model.AuslaufzeitMorgensVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="08:00" />
+                                        <InputText type="time" @bind-Value="model.AuslaufzeitMorgensVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="08:00" />
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-slate-500 mb-1">Morgens bis</label>
-                                        <InputText @bind-Value="model.AuslaufzeitMorgensBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="12:00" />
+                                        <InputText type="time" @bind-Value="model.AuslaufzeitMorgensBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="12:00" />
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-slate-500 mb-1">Abends von</label>
-                                        <InputText @bind-Value="model.AuslaufzeitAbendsVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="14:00" />
+                                        <InputText type="time" @bind-Value="model.AuslaufzeitAbendsVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="14:00" />
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-slate-500 mb-1">Abends bis</label>
-                                        <InputText @bind-Value="model.AuslaufzeitAbendsBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="18:00" />
+                                        <InputText type="time" @bind-Value="model.AuslaufzeitAbendsBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="18:00" />
                                     </div>
                                 </div>
                             </div>
@@ -229,11 +229,11 @@
                                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div class="space-y-1.5">
                                         <span class="text-xs text-slate-500">Von</span>
-                                        <InputText @bind-Value="model.LichtVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 05:00" />
+                                        <InputText type="time" @bind-Value="model.LichtVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 05:00" />
                                     </div>
                                     <div class="space-y-1.5">
                                         <span class="text-xs text-slate-500">Bis</span>
-                                        <InputText @bind-Value="model.LichtBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 22:00" />
+                                        <InputText type="time" @bind-Value="model.LichtBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 22:00" />
                                     </div>
                                 </div>
                             </div>
