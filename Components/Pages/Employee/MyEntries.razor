@@ -286,6 +286,9 @@
 }
 
 @code {
+    [SupplyParameterFromQuery(Name = "editId")]
+    public int? EditId { get; set; }
+
     private List<DailyEntry> entries = new();
     private List<Stall> stalls = new();
     private int selectedStallId = 0;
@@ -312,6 +315,16 @@
         stalls = await context.Stalls.OrderBy(s => s.Name).ToListAsync();
         
         await LoadEntriesAsync();
+        
+        if (EditId.HasValue)
+        {
+            var targetEntry = entries.FirstOrDefault(e => e.Id == EditId.Value);
+            if (targetEntry != null)
+            {
+                OpenEditModal(targetEntry);
+            }
+        }
+        
         isLoading = false;
     }
 

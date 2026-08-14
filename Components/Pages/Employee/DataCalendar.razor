@@ -120,6 +120,7 @@
     private int selectedStallId;
     private List<Stall> stalls = new();
     private HashSet<DateTime> completedDates = new();
+    private Dictionary<DateTime, int> existingEntries = new();
     private List<DateTime> days = new();
     private int firstDayOffset;
     private bool isLoading = true;
@@ -142,11 +143,12 @@
 
         using var context = await DbFactory.CreateDbContextAsync();
         var entries = await context.DailyEntries
-            .Where(e => e.StallId == selectedStallId && e.Date >= start && e.Date < end && (e.FutterKg > 0 || e.WasserLiter > 0 || e.Eier1Wahl > 0 || e.Verluste > 0 || e.Status == EntryStatus.Freigegeben))
-            .Select(e => e.Date.Date)
+            .Where(e => e.StallId == selectedStallId && e.Date >= start && e.Date < end)
+            .Select(e => new { e.Id, e.Date, IsCompleted = (e.FutterKg > 0 || e.WasserLiter > 0 || e.Eier1Wahl > 0 || e.Verluste > 0 || e.Status == EntryStatus.Freigegeben) })
             .ToListAsync();
 
-        completedDates = new HashSet<DateTime>(entries);
+        existingEntries = entries.ToDictionary(e => e.Date.Date, e => e.Id);
+        completedDates = new HashSet<DateTime>(entries.Where(e => e.IsCompleted).Select(e => e.Date.Date));
         GenerateCalendarGrid();
     }
 
@@ -180,7 +182,14 @@
     {
         if (date.Date <= DateTime.Today && !completedDates.Contains(date.Date))
         {
-            Nav.NavigateTo($"/datenerfassung?PreDate={date.ToString("yyyy-MM-dd")}&PreStall={selectedStallId}");
+            if (existingEntries.TryGetValue(date.Date, out int existingId))
+            {
+                Nav.NavigateTo($"/meine-eintraege?editId={existingId}");
+            }
+            else
+            {
+                Nav.NavigateTo($"/datenerfassung?PreDate={date.ToString("yyyy-MM-dd")}&PreStall={selectedStallId}");
+            }
         }
     }
 }
