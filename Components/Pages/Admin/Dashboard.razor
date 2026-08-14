@@ -187,27 +187,30 @@
                     <tbody class="divide-y divide-amber-100">
                         @foreach (var entry in pendingEntries) {
                             <tr class="hover:bg-amber-100/20 transition-colors">
-                                <td class="px-4 py-3 font-medium">@entry.Date.ToShortDateString()</td>
+                                <td class="px-4 py-3 font-medium">
+                                    @entry.Date.ToShortDateString()
+                                    <span class="text-[10px] font-normal text-amber-700 block mt-0.5">Erfasst um @entry.CreatedAt.ToString("HH:mm") Uhr</span>
+                                </td>
                                 <td class="px-4 py-3">@entry.Stall?.Name</td>
                                 <td class="px-4 py-3 text-center">
-                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.Verluste" /> }
+                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.Verluste" placeholder="0" /> }
                                     else { <span>@entry.Verluste</span> }
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.ZugaengeTiere" /> }
+                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.ZugaengeTiere" placeholder="0" /> }
                                     else { <span>@(entry.ZugaengeTiere ?? 0)</span> }
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.Eier1Wahl" /> }
+                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.Eier1Wahl" placeholder="0" /> }
                                     else { <span>@entry.Eier1Wahl</span> }
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.Eier2Wahl" /> }
+                                    @if (isAdmin) { <input type="number" class="w-16 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.Eier2Wahl" placeholder="0" /> }
                                     else { <span>@entry.Eier2Wahl</span> }
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex flex-col items-center">
-                                        @if (isAdmin) { <input type="number" step="0.1" class="w-20 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.FutterKg" /> }
+                                        @if (isAdmin) { <input type="number" step="0.1" class="w-20 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.FutterKg" placeholder="0" /> }
                                         else { <span>@((entry.FutterKg ?? 0).ToString("N1"))</span> }
                                         @if (entry.FutterlieferungKg.HasValue)
                                         {
@@ -218,7 +221,7 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    @if (isAdmin) { <input type="number" step="0.1" class="w-20 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.WasserLiter" /> }
+                                    @if (isAdmin) { <input type="number" step="0.1" class="w-20 rounded border-amber-200 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-amber-500/20 text-center" @bind="entry.WasserLiter" placeholder="0" /> }
                                     else { <span>@((entry.WasserLiter ?? 0).ToString("N1"))</span> }
                                 </td>
                                 <td class="px-4 py-3">
