@@ -214,44 +214,44 @@
                 <div class="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Licht Von</label>
-                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.LichtVon" />
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.LichtVon" @onchange="@(e => editingEntry.LichtVon = e.Value?.ToString())" />
                     </div>
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Licht Bis</label>
-                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.LichtBis" />
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.LichtBis" @onchange="@(e => editingEntry.LichtBis = e.Value?.ToString())" />
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Auslauf Morgens Von</label>
-                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.AuslaufzeitMorgensVon" />
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.AuslaufzeitMorgensVon" @onchange="@(e => editingEntry.AuslaufzeitMorgensVon = e.Value?.ToString())" />
                     </div>
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Morgens Bis</label>
-                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.AuslaufzeitMorgensBis" />
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.AuslaufzeitMorgensBis" @onchange="@(e => editingEntry.AuslaufzeitMorgensBis = e.Value?.ToString())" />
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Auslauf Abends Von</label>
-                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.AuslaufzeitAbendsVon" />
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.AuslaufzeitAbendsVon" @onchange="@(e => editingEntry.AuslaufzeitAbendsVon = e.Value?.ToString())" />
                     </div>
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Abends Bis</label>
-                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.AuslaufzeitAbendsBis" />
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.AuslaufzeitAbendsBis" @onchange="@(e => editingEntry.AuslaufzeitAbendsBis = e.Value?.ToString())" />
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kontrollzeiten Von</label>
-                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.KontrollzeitenVon" />
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.KontrollzeitenVon" @onchange="@(e => editingEntry.KontrollzeitenVon = e.Value?.ToString())" />
                     </div>
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kontrollzeiten Bis</label>
-                        <input type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" @bind="editingEntry.KontrollzeitenBis" />
+                        <input type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" value="@editingEntry.KontrollzeitenBis" @onchange="@(e => editingEntry.KontrollzeitenBis = e.Value?.ToString())" />
                     </div>
                 </div>
 
