@@ -78,45 +78,61 @@ window.renderPerformanceCurve = (canvasId, labels, datasets) => {
     }
 
     const dpr = window.devicePixelRatio || 1;
+    const canvasContext = ctx.getContext('2d');
 
-    // Moderne, kräftige, aber edle Farben
+    // Gradienten für die Flächen unter den Kurven
+    let layGradient = canvasContext.createLinearGradient(0, 0, 0, 300);
+    layGradient.addColorStop(0, 'rgba(79, 70, 229, 0.4)'); // Deep Indigo
+    layGradient.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
+
+    let lossGradient = canvasContext.createLinearGradient(0, 0, 0, 300);
+    lossGradient.addColorStop(0, 'rgba(20, 184, 166, 0.4)'); // Teal
+    lossGradient.addColorStop(1, 'rgba(20, 184, 166, 0.0)');
+
+    let weightGradient = canvasContext.createLinearGradient(0, 0, 0, 300);
+    weightGradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)'); // Violet
+    weightGradient.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
+
+    // Moderne, eigenständige Farben
     const colors = {
-        layActual: '#3b82f6', // Blau (kräftig)
-        layNorm: 'rgba(59, 130, 246, 0.5)',   // Blau (weich für Norm)
-        lossActual: '#ef4444', // Rot
-        lossNorm: 'rgba(239, 68, 68, 0.5)',  // Rot (weich)
-        weightActual: '#10b981', // Smaragd-Grün
-        weightNorm: 'rgba(16, 185, 129, 0.5)'  // Smaragd (weich)
+        layActual: '#4f46e5', // Deep Indigo
+        lossActual: '#14b8a6', // Teal
+        weightActual: '#8b5cf6', // Violet
+        norm: '#cbd5e1' // Zurückhaltendes Grau
     };
 
     const formattedDatasets = datasets.map(ds => {
         let borderColor = '#94a3b8';
+        let backgroundColor = 'transparent';
         let yAxisID = 'y';
         let borderDash = [];
-        let pointRadius = 0;
         let isNorm = ds.type.includes('Norm');
+        let fill = false;
 
-        if (ds.type === 'layActual') borderColor = colors.layActual;
-        else if (ds.type === 'layNorm') { borderColor = colors.layNorm; borderDash = [5, 5]; }
-        else if (ds.type === 'lossActual') { borderColor = colors.lossActual; yAxisID = 'yLoss'; }
-        else if (ds.type === 'lossNorm') { borderColor = colors.lossNorm; yAxisID = 'yLoss'; borderDash = [5, 5]; }
-        else if (ds.type === 'weightActual') borderColor = colors.weightActual;
-        else if (ds.type === 'weightNorm') { borderColor = colors.weightNorm; borderDash = [5, 5]; }
+        // "unter der Haupt-Leistungskurve einen leichten, halbtransparenten Farbverlauf"
+        // Wir können es auf alle anwenden oder primär auf die Hauptkurven.
+        if (ds.type === 'layActual') { borderColor = colors.layActual; backgroundColor = layGradient; fill = true; }
+        else if (ds.type === 'layNorm') { borderColor = colors.norm; borderDash = [5, 5]; }
+        else if (ds.type === 'lossActual') { borderColor = colors.lossActual; yAxisID = 'yLoss'; backgroundColor = lossGradient; fill = true; }
+        else if (ds.type === 'lossNorm') { borderColor = colors.norm; yAxisID = 'yLoss'; borderDash = [5, 5]; }
+        else if (ds.type === 'weightActual') { borderColor = colors.weightActual; backgroundColor = weightGradient; fill = true; }
+        else if (ds.type === 'weightNorm') { borderColor = colors.norm; borderDash = [5, 5]; }
 
         return {
             label: ds.label,
             data: ds.data,
             borderColor: borderColor,
+            backgroundColor: backgroundColor,
             borderWidth: isNorm ? 2 : 3,
             borderDash: borderDash,
-            pointRadius: isNorm ? 0 : 3,
+            pointRadius: isNorm ? 0 : 4,
             pointBackgroundColor: borderColor,
             pointBorderColor: '#ffffff',
-            pointBorderWidth: 1.5,
+            pointBorderWidth: 2,
             pointHoverRadius: 6,
             yAxisID: yAxisID,
-            tension: 0.4, // Weiche Kurven
-            fill: false
+            tension: 0.4, // Weiche, abgerundete Kurven (Bezier)
+            fill: fill
         };
     });
 
@@ -134,7 +150,14 @@ window.renderPerformanceCurve = (canvasId, labels, datasets) => {
             plugins: {
                 legend: {
                     position: 'top',
-                    labels: { usePointStyle: true, font: { family: "'Inter', sans-serif", size: 12, weight: '500' }, padding: 20 }
+                    labels: { 
+                        usePointStyle: true, 
+                        boxWidth: 8,
+                        boxHeight: 8,
+                        font: { family: "'Inter', sans-serif", size: 12, weight: '500' }, 
+                        padding: 24,
+                        color: '#64748b'
+                    }
                 },
                 tooltip: {
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -170,9 +193,10 @@ window.renderPerformanceCurve = (canvasId, labels, datasets) => {
                     position: 'left',
                     min: 0,
                     max: 100,
-                    title: { display: true, text: 'Leistung % / Eigewicht g', font: { family: "'Inter', sans-serif", weight: 'bold', size: 12 }, color: '#475569' },
-                    grid: { color: '#f1f5f9' },
-                    ticks: { font: { family: "'Inter', sans-serif" }, color: '#64748b' }
+                    title: { display: false }, // Minimalistisch
+                    grid: { color: '#f8fafc' }, // Nur helle horizontale Hilfslinien
+                    border: { display: false },
+                    ticks: { font: { family: "'Inter', sans-serif", size: 11 }, color: '#94a3b8', padding: 8 }
                 },
                 yLoss: {
                     type: 'linear',
@@ -180,14 +204,16 @@ window.renderPerformanceCurve = (canvasId, labels, datasets) => {
                     position: 'right',
                     min: 0,
                     max: 10,
-                    title: { display: true, text: 'Verluste %', font: { family: "'Inter', sans-serif", weight: 'bold', size: 12 }, color: colors.lossActual },
-                    grid: { drawOnChartArea: false },
-                    ticks: { font: { family: "'Inter', sans-serif" }, color: colors.lossActual }
+                    title: { display: false },
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: { font: { family: "'Inter', sans-serif", size: 11 }, color: '#94a3b8', padding: 8 }
                 },
                 x: {
-                    title: { display: true, text: 'Alter in Wochen', font: { family: "'Inter', sans-serif", weight: 'bold', size: 12 }, color: '#475569' },
-                    grid: { color: '#f1f5f9' },
-                    ticks: { font: { family: "'Inter', sans-serif" }, color: '#64748b' }
+                    title: { display: false },
+                    grid: { display: false }, // Kein vertikales Raster
+                    border: { display: false },
+                    ticks: { font: { family: "'Inter', sans-serif", size: 11 }, color: '#94a3b8', padding: 8, maxTicksLimit: 12 }
                 }
             }
         }
