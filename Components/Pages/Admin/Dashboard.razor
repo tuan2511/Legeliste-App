@@ -977,8 +977,14 @@
         int chartW = svgW - padL - padR;
         int chartH = svgH - padT - padB;
 
-        // 1. Daten zwingend chronologisch sortieren
-        var sortedHistory = inventoryHistory.OrderBy(x => x.Date).ToList();
+        // 1. Daten zwingend chronologisch sortieren & gruppieren
+        var sortedHistory = inventoryHistory
+            .GroupBy(x => x.Date.Date)
+            .Select(g => (Date: g.Key, BalanceKg: g.Last().BalanceKg))
+            .OrderBy(x => x.Date)
+            .ToList();
+
+        if (!sortedHistory.Any()) return "";
 
         double maxBal = Math.Max((double)sortedHistory.Max(h => h.BalanceKg), 1);
         double minBal = Math.Min((double)sortedHistory.Min(h => h.BalanceKg), 0);
@@ -1001,17 +1007,22 @@
             sb.Append($"<text x=\"{padL - 6}\" y=\"{gy + 4:F0}\" text-anchor=\"end\" font-size=\"9\" fill=\"#94a3b8\">{gVal:N0} kg</text>");
         }
 
+        double minDate = sortedHistory.First().Date.Ticks;
+        double maxDate = sortedHistory.Last().Date.Ticks;
+        double dateRange = maxDate - minDate;
+        if (dateRange == 0) dateRange = 1;
+
         // X-Labels
         int labelStep = Math.Max(1, n / 6);
         for (int li = 0; li < n; li += labelStep)
         {
-            double lx = padL + (n > 1 ? li * (double)chartW / (n - 1) : chartW / 2.0);
+            double lx = padL + (n > 1 ? (sortedHistory[li].Date.Ticks - minDate) / dateRange * chartW : chartW / 2.0);
             sb.Append($"<text x=\"{lx:F0}\" y=\"{svgH}\" text-anchor=\"middle\" font-size=\"8\" fill=\"#94a3b8\">{sortedHistory[li].Date.ToString("dd.MM.")}</text>");
         }
 
         // Punkte berechnen
         var pts = sortedHistory.Select((h, i) => {
-            double x = padL + (n > 1 ? i * (double)chartW / (n - 1) : chartW / 2.0);
+            double x = padL + (n > 1 ? (h.Date.Ticks - minDate) / dateRange * chartW : chartW / 2.0);
             double y = padT + chartH - ((double)h.BalanceKg - minBal) / range * chartH;
             return (x, y);
         }).ToList();
@@ -1022,10 +1033,10 @@
         {
             double firstX = pts.First().x;
             double lastX = pts.Last().x;
-            var pathPts = string.Join(" ", pts.Select(p => $"L {p.x:F1},{p.y:F1}"));
+            var pathPts = string.Join(" ", pts.Skip(1).Select(p => $"L {p.x:F1},{p.y:F1}"));
             
-            // 2. Pfad korrekt schließen: Start bei firstX/baseY, alle Punkte, dann runter zu lastX/baseY, und Z (zurück zum Start)
-            sb.Append($"<path d=\"M {firstX:F1},{baseY:F0} {pathPts} L {lastX:F1},{baseY:F0} Z\" fill=\"{color}\" opacity=\"0.08\"/>");
+            // 2. Pfad exakt schließen
+            sb.Append($"<path d=\"M {pts[0].x:F1},{pts[0].y:F1} {pathPts} L {lastX:F1},{baseY:F0} L {firstX:F1},{baseY:F0} Z\" fill=\"{color}\" opacity=\"0.08\"/>");
         }
 
         // Linie
