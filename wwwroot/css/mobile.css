@@ -1,0 +1,196 @@
+/* ============================================================
+   mobile.css – Responsive / Mobile-First Anpassungen
+   Legeliste-App  |  Stand: August 2026
+   ============================================================ */
+
+/* ------ 1. Globale Basis ------------------------------------ */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Verhindert horizontales Scrolling auf Root-Ebene */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* ------ 2. Haupt-Content-Bereich: Padding on Mobile --------- */
+/* Auf Mobilgeräten reduzieren wir das Padding des Haupt-Containers */
+@media (max-width: 767px) {
+    main > .space-y-6,
+    main > .p-6,
+    main > .grid.gap-6 {
+        padding: 1rem !important;
+    }
+
+    /* Header-Padding auf Mobile reduzieren */
+    header .flex.h-16 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* Datum-Anzeige im Header auf Mobile ausblenden (zu wenig Platz) */
+    header .flex.h-16 span.text-sm.text-slate-500 {
+        display: none;
+    }
+}
+
+/* ------ 3. Tabellen: Horizontales Scrollen ------------------- */
+/* Alle Tabellen-Container werden scrollbar – falls noch kein overflow-x-auto */
+.table-responsive,
+.overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Tabellen behalten ihre Mindestbreite auf mobilen Screens */
+@media (max-width: 767px) {
+    table {
+        min-width: 520px; /* Verhindert Zeilenbrüche in Tabellenzellen */
+    }
+}
+
+/* ------ 4. DataEntry-Wizard: Navigation-Buttons -------------- */
+/* Weiter/Zurück-Buttons müssen auf Handys gut tippbar sein */
+@media (max-width: 767px) {
+    /* Wizard Navigation */
+    .wizard-nav-buttons {
+        gap: 0.5rem;
+    }
+
+    .wizard-nav-buttons button,
+    /* Generell: Form-Action-Buttons breiter und höher auf Mobile */
+    form button[type="submit"],
+    form button[type="button"] {
+        min-height: 44px;
+    }
+
+    /* Dateneingabe: Haupt-Aktionsbutton volle Breite */
+    .btn-mobile-full {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ------ 5. Formular-Grids: Immer einspaltig auf Mobile ------- */
+@media (max-width: 639px) { /* sm-Breakpoint von Tailwind */
+    /* Alle 2-spaltigen Grids auf Mobile einspaltig */
+    .grid.sm\:grid-cols-2,
+    .grid.grid-cols-2:not(.keep-cols) {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ------ 6. SVG-Charts: Immer responsiv ---------------------- */
+svg[viewBox] {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Canvas (Chart.js) */
+canvas {
+    max-width: 100%;
+}
+
+/* ------ 7. Modals / Dialoge --------------------------------- */
+@media (max-width: 767px) {
+    /* ChangelogModal und andere Modals: Fast volle Breite + scrollbar */
+    .fixed.inset-0 > div:first-child, /* Modale innen */
+    [class*="max-w-md"],
+    [class*="max-w-lg"],
+    [class*="max-w-xl"] {
+        width: calc(100vw - 2rem) !important;
+        max-width: calc(100vw - 2rem) !important;
+        max-height: 90vh;
+        overflow-y: auto;
+        margin: 1rem;
+    }
+
+    /* Buttons in Dialogen: Volle Breite und gut klickbar */
+    .fixed.inset-0 button[type="button"],
+    .fixed.inset-0 button:not(.icon-btn) {
+        min-height: 44px;
+    }
+}
+
+/* ------ 8. Dashboard: Stall-Filter auf Mobile --------------- */
+@media (max-width: 767px) {
+    /* Stall-Auswahl-Leiste untereinander statt nebeneinander */
+    .mb-6.flex.items-center.gap-4 {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mb-6.flex.items-center.gap-4 select {
+        width: 100%;
+    }
+
+    /* Tab-Switcher: Volle Breite auf Mobile */
+    .flex.gap-2.p-1.bg-slate-100.rounded-lg {
+        width: 100%;
+    }
+
+    .flex.gap-2.p-1.bg-slate-100.rounded-lg button {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+/* ------ 9. UserManagement: Sidebar-Grid auf Mobile ---------- */
+@media (max-width: 1023px) { /* lg-Breakpoint */
+    /* Das 12-Spalten-Grid wird auf Mobile zum Stack */
+    .grid.gap-6.lg\:grid-cols-12 > div {
+        grid-column: 1 / -1 !important;
+    }
+}
+
+/* ------ 10. FeedDeliveries: Gesamtbilanz Cards -------------- */
+@media (max-width: 767px) {
+    /* Bilanz-Karten: Größere Zahlen für bessere Lesbarkeit im Stall */
+    .p-6.grid.grid-cols-2.gap-4.text-center .text-2xl {
+        font-size: 1.75rem;
+    }
+}
+
+/* ------ 11. Allgemeine Touch-Target-Größen ------------------ */
+/* Alle interaktiven Elemente mindestens 44x44px */
+a, button, [role="button"],
+input[type="checkbox"], input[type="radio"] {
+    touch-action: manipulation; /* Verhindert 300ms Tap-Delay */
+}
+
+button, a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Checkboxen und Radio-Buttons: Größer auf Touch-Screens */
+@media (hover: none) and (pointer: coarse) {
+    input[type="checkbox"],
+    input[type="radio"] {
+        width: 1.25rem;
+        height: 1.25rem;
+        min-width: 1.25rem;
+    }
+}
+
+/* ------ 12. DataCalendar: Gitter-Überlauf verhindern -------- */
+@media (max-width: 767px) {
+    .grid.grid-cols-7 { /* Wochenkalender */
+        font-size: 0.7rem;
+    }
+
+    .grid.grid-cols-7 > div {
+        padding: 0.25rem;
+        min-height: 2.5rem;
+    }
+}
+
+/* ------ 13. PerformanceCurve: Chart-Container --------------- */
+@media (max-width: 767px) {
+    /* Canvas-Container hat auf Mobile angemessene Höhe */
+    [style*="height: 400px"],
+    [style*="height:400px"] {
+        height: 250px !important;
+    }
+}

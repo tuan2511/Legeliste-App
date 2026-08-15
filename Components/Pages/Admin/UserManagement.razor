@@ -12,7 +12,7 @@
 <PageTitle>Stammtdaten: Benutzer</PageTitle>
 
 <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-    <div class="flex h-16 items-center justify-between px-6">
+    <div class="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
         <div>
             <h1 class="text-lg font-semibold text-slate-900">Benutzer-Verwaltung</h1>
             <p class="text-sm text-slate-500">Systembenutzer und Berechtigungen verwalten</p>
@@ -20,7 +20,7 @@
     </div>
 </header>
 
-<div class="grid gap-6 p-6 lg:grid-cols-12">
+<div class="grid gap-6 p-4 sm:p-6 lg:grid-cols-12">
     @if (isLoading)
     {
         <div class="lg:col-span-12 flex h-[50vh] items-center justify-center">
@@ -33,7 +33,7 @@
     else
     {
     <!-- Neuer Benutzer Formular -->
-    <div class="lg:col-span-4">
+    <div class="lg:col-span-4 col-span-full">
         <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
             <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
                 <h3 class="text-base font-semibold text-slate-900">Neuen Benutzer anlegen</h3>
@@ -77,7 +77,7 @@
                             </InputSelect>
                         </div>
                         
-                        <button type="submit" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                        <button type="submit" class="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors min-h-[44px]">
                             Benutzer anlegen
                         </button>
                     </div>
@@ -87,7 +87,7 @@
     </div>
 
     <!-- Benutzer Liste -->
-    <div class="lg:col-span-8">
+    <div class="lg:col-span-8 col-span-full">
         <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
             <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex justify-between items-center">
                 <h3 class="text-base font-semibold text-slate-900">Vorhandene Benutzer</h3>

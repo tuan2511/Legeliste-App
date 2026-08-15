@@ -5,9 +5,9 @@
 
 @if (isVisible)
 {
-    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 transition-opacity duration-300">
-        <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden border border-slate-200 transition-all duration-300 transform scale-100">
-            <div class="bg-blue-600 px-6 py-8 text-center text-white relative">
+    <div class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-0 sm:p-4 transition-opacity duration-300">
+        <div class="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl border border-slate-200 transition-all duration-300 transform scale-100 flex flex-col max-h-[92vh]">
+            <div class="bg-blue-600 px-6 py-6 sm:py-8 text-center text-white relative shrink-0">
                 <div class="absolute top-4 right-4">
                      <button @onclick="Close" class="text-white/80 hover:text-white transition-colors">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +34,7 @@
                 </button>
             </div>
             
-            <div class="p-6 space-y-8 min-h-[300px]">
+            <div class="overflow-y-auto flex-1 p-6 space-y-8 min-h-[200px]">
                 @if (currentVersionIndex == 0)
                 {
                     <!-- Version 1.4 -->

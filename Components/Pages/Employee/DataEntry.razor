@@ -15,16 +15,16 @@
 
 <!-- Header -->
 <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-    <div class="flex h-16 items-center justify-between px-6">
+    <div class="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6">
         <div>
             <h1 class="text-lg font-semibold text-slate-900">Dateneingabe</h1>
             <p class="text-sm text-slate-500">Tägliche Erfassung der Stalldaten</p>
         </div>
-        <span class="text-sm text-slate-500">Heute: @DateTime.Today.ToString("dd. MMMM yyyy")</span>
+        <span class="hidden sm:block text-sm text-slate-500">Heute: @DateTime.Today.ToString("dd. MMMM yyyy")</span>
     </div>
 </header>
 
-<div class="mx-auto max-w-2xl px-6 py-8">
+<div class="mx-auto max-w-2xl px-4 sm:px-6 py-8">
     @if (isLoading)
     {
         <div class="flex h-[50vh] items-center justify-center">
@@ -342,16 +342,16 @@
             </div>
 
             <!-- Navigation Buttons -->
-            <div class="mt-6 flex items-center justify-between">
+            <div class="mt-6 flex items-center justify-between gap-3 wizard-nav-buttons">
                 <button type="button" disabled="@(currentStep == 1)" @onclick="PreviousStep"
-                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
+                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px]">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     Zurück
                 </button>
                 @if (currentStep < 4)
                 {
                     <button type="button" @onclick="NextStep"
-                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700">
+                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 min-h-[44px] flex-1 justify-center sm:flex-none">
                         Weiter
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </button>
@@ -359,7 +359,7 @@
                 else
                 {
                     <button type="submit"
-                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700">
+                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 min-h-[44px] flex-1 justify-center sm:flex-none">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                         Absenden
                     </button>
