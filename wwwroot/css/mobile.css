@@ -81,15 +81,17 @@ html, body {
     }
 }
 
-/* ------ 6. SVG-Charts: Immer responsiv ---------------------- */
-svg[viewBox] {
+/* ------ 6. SVG-Charts: Responsiv – nur innerhalb .chart-container ------- */
+/* WICHTIG: Diese Regel gilt AUSSCHLIESSLICH für SVG-Charts, nicht für UI-Icons! */
+.chart-container svg {
     width: 100%;
     height: auto;
     display: block;
 }
 
-/* Canvas (Chart.js) */
-canvas {
+/* Chart.js Canvas ebenfalls nur im chart-container */
+.chart-container canvas,
+canvas:not([style]) {
     max-width: 100%;
 }
 

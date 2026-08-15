@@ -100,7 +100,7 @@
                 <h3 class="text-base font-semibold text-slate-900">Futter- &amp; Wasserverbrauch</h3>
                 <p class="text-sm text-slate-500">Letzte 7 Tage</p>
             </div>
-            <div class="p-4 sm:p-6 h-[250px] sm:h-[300px]">
+            <div class="p-4 sm:p-6 h-[250px] sm:h-[300px] chart-container">
                 <canvas id="consumptionChart"></canvas>
             </div>
         </div>
@@ -118,7 +118,7 @@
                     Lieferung erfassen
                 </button>
             </div>
-            <div class="p-4 overflow-x-auto">
+            <div class="p-4 overflow-x-auto chart-container">
                 @if (inventoryHistory.Count > 0)
                 {
                     @((MarkupString)BuildInventoryChartSvg())
