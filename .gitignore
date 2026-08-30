@@ -486,3 +486,8 @@ $RECYCLE.BIN/
 # Tailwind Standalone CLI Binary (wird lokal heruntergeladen, nicht commited)
 tailwindcss.exe
 package-lock.json
+
+# Lokale/umgebungsspezifische Konfiguration mit sensiblen Werten (Secrets gehören in User Secrets)
+appsettings.Development.json
+appsettings.Local.json
+appsettings.Production.json

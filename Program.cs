@@ -13,6 +13,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var adminSeedPassword = builder.Configuration["AdminSeed:Password"] ?? throw new InvalidOperationException("AdminSeed:Password not configured.");
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -86,7 +87,7 @@ using (var scope = app.Services.CreateScope())
             PasswordHash = ""
         };
         var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<LegelisteApp.Data.Models.User>();
-        adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "admin123");
+        adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, adminSeedPassword);
         dbContext.Users.Add(adminUser);
         dbContext.SaveChanges();
     }
@@ -98,7 +99,7 @@ using (var scope = app.Services.CreateScope())
         // Notfall-Rettung: Admin Account reaktivieren
         currentAdmin.IsActive = true;
         var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<LegelisteApp.Data.Models.User>();
-        currentAdmin.PasswordHash = passwordHasher.HashPassword(currentAdmin, "admin123");
+        currentAdmin.PasswordHash = passwordHasher.HashPassword(currentAdmin, adminSeedPassword);
         dbContext.SaveChanges();
 
         var validUserIds = dbContext.Users.Select(u => u.Id).ToList();
