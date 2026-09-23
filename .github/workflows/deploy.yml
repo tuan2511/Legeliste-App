@@ -20,6 +20,11 @@ jobs:
     - name: 🔨 Projekt bauen & Publish
       run: dotnet publish -c Release -o ./publish
 
+    - name: 🛑 Website offline nehmen (Datei-Sperren lösen)
+      run: |
+        echo "App offline for deployment" > app_offline.htm
+        curl -sS -T app_offline.htm "ftp://${{ secrets.FTP_SERVER }}/wwwroot/app_offline.htm" --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}"
+
     - name: 🚀 Upload zu MonsterASP via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
@@ -28,3 +33,7 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./publish/
         server-dir: /wwwroot/
+
+    - name: ✅ Website wieder online schalten
+      run: |
+        curl -sS "ftp://${{ secrets.FTP_SERVER }}/wwwroot/" --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" -Q "DELE app_offline.htm"
