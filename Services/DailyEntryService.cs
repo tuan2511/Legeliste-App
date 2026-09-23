@@ -38,12 +38,18 @@ public class DailyEntryService
         dbEntry.Bemerkungen = updatedData.Bemerkungen;
         dbEntry.LichtVon = updatedData.LichtVon;
         dbEntry.LichtBis = updatedData.LichtBis;
-        dbEntry.AuslaufzeitMorgensVon = updatedData.AuslaufzeitMorgensVon;
-        dbEntry.AuslaufzeitMorgensBis = updatedData.AuslaufzeitMorgensBis;
-        dbEntry.AuslaufzeitAbendsVon = updatedData.AuslaufzeitAbendsVon;
-        dbEntry.AuslaufzeitAbendsBis = updatedData.AuslaufzeitAbendsBis;
-        dbEntry.KontrollzeitenVon = updatedData.KontrollzeitenVon;
-        dbEntry.KontrollzeitenBis = updatedData.KontrollzeitenBis;
+        dbEntry.Auslaufzeit1Von = updatedData.Auslaufzeit1Von;
+        dbEntry.Auslaufzeit1Bis = updatedData.Auslaufzeit1Bis;
+        dbEntry.Auslaufzeit2Von = updatedData.Auslaufzeit2Von;
+        dbEntry.Auslaufzeit2Bis = updatedData.Auslaufzeit2Bis;
+        dbEntry.Auslaufzeit3Von = updatedData.Auslaufzeit3Von;
+        dbEntry.Auslaufzeit3Bis = updatedData.Auslaufzeit3Bis;
+        dbEntry.Auslaufzeit4Von = updatedData.Auslaufzeit4Von;
+        dbEntry.Auslaufzeit4Bis = updatedData.Auslaufzeit4Bis;
+        dbEntry.Kontrollzeit1 = updatedData.Kontrollzeit1;
+        dbEntry.Kontrollzeit2 = updatedData.Kontrollzeit2;
+        dbEntry.Kontrollzeit3 = updatedData.Kontrollzeit3;
+        dbEntry.Kontrollzeit4 = updatedData.Kontrollzeit4;
 
         // Sicherheitsregel: Wenn Mitarbeiter bearbeitet und es war bereits freigegeben, wird es zurückgesetzt (oder es bleibt Entwurf/Wartend)
         bool isAdmin = user.IsInRole("Admin");
@@ -80,12 +86,18 @@ public class DailyEntryService
         dbEntry.Bemerkungen = updatedData.Bemerkungen;
         dbEntry.LichtVon = updatedData.LichtVon;
         dbEntry.LichtBis = updatedData.LichtBis;
-        dbEntry.AuslaufzeitMorgensVon = updatedData.AuslaufzeitMorgensVon;
-        dbEntry.AuslaufzeitMorgensBis = updatedData.AuslaufzeitMorgensBis;
-        dbEntry.AuslaufzeitAbendsVon = updatedData.AuslaufzeitAbendsVon;
-        dbEntry.AuslaufzeitAbendsBis = updatedData.AuslaufzeitAbendsBis;
-        dbEntry.KontrollzeitenVon = updatedData.KontrollzeitenVon;
-        dbEntry.KontrollzeitenBis = updatedData.KontrollzeitenBis;
+        dbEntry.Auslaufzeit1Von = updatedData.Auslaufzeit1Von;
+        dbEntry.Auslaufzeit1Bis = updatedData.Auslaufzeit1Bis;
+        dbEntry.Auslaufzeit2Von = updatedData.Auslaufzeit2Von;
+        dbEntry.Auslaufzeit2Bis = updatedData.Auslaufzeit2Bis;
+        dbEntry.Auslaufzeit3Von = updatedData.Auslaufzeit3Von;
+        dbEntry.Auslaufzeit3Bis = updatedData.Auslaufzeit3Bis;
+        dbEntry.Auslaufzeit4Von = updatedData.Auslaufzeit4Von;
+        dbEntry.Auslaufzeit4Bis = updatedData.Auslaufzeit4Bis;
+        dbEntry.Kontrollzeit1 = updatedData.Kontrollzeit1;
+        dbEntry.Kontrollzeit2 = updatedData.Kontrollzeit2;
+        dbEntry.Kontrollzeit3 = updatedData.Kontrollzeit3;
+        dbEntry.Kontrollzeit4 = updatedData.Kontrollzeit4;
 
         // Status explizit auf WartetAufFreigabe setzen
         dbEntry.Status = EntryStatus.WartetAufFreigabe;

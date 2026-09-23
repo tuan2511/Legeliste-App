@@ -231,15 +231,19 @@
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-slate-700">Kontrollzeiten</label>
                                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <div class="space-y-1.5">
-                                        <span class="text-xs text-slate-500">1. Kontrolle</span>
-                                        <InputText type="time" @bind-Value="model.KontrollzeitenVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 07:00" />
-                                    </div>
-                                    <div class="space-y-1.5">
-                                        <span class="text-xs text-slate-500">2. Kontrolle</span>
-                                        <InputText type="time" @bind-Value="model.KontrollzeitenBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 16:00" />
-                                    </div>
+                                    @for (int i = 0; i < kontrollzeitAnzahl; i++)
+                                    {
+                                        var idx = i;
+                                        <div class="space-y-1.5">
+                                            <span class="text-xs text-slate-500">@(idx + 1). Kontrolle</span>
+                                            <InputText type="time" @bind-Value="model.Kontrollzeiten[idx]" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="z.B. 07:00" />
+                                        </div>
+                                    }
                                 </div>
+                                @if (kontrollzeitAnzahl < 4)
+                                {
+                                    <button type="button" @onclick="() => kontrollzeitAnzahl++" class="text-sm font-medium text-blue-600 hover:text-blue-700">+ Weitere Kontrollzeit</button>
+                                }
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-slate-700">Bemerkungen</label>
@@ -248,23 +252,23 @@
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-slate-700">Auslaufzeit</label>
                                 <div class="grid grid-cols-2 gap-4 mt-2">
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-500 mb-1">Morgens von</label>
-                                        <InputText type="time" @bind-Value="model.AuslaufzeitMorgensVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="08:00" />
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-500 mb-1">Morgens bis</label>
-                                        <InputText type="time" @bind-Value="model.AuslaufzeitMorgensBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="12:00" />
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-500 mb-1">Abends von</label>
-                                        <InputText type="time" @bind-Value="model.AuslaufzeitAbendsVon" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="14:00" />
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-500 mb-1">Abends bis</label>
-                                        <InputText type="time" @bind-Value="model.AuslaufzeitAbendsBis" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="18:00" />
-                                    </div>
+                                    @for (int i = 0; i < auslaufzeitAnzahl; i++)
+                                    {
+                                        var idx = i;
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">Auslaufzeit @(idx + 1) von</label>
+                                            <InputText type="time" @bind-Value="model.AuslaufzeitVon[idx]" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="08:00" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">Auslaufzeit @(idx + 1) bis</label>
+                                            <InputText type="time" @bind-Value="model.AuslaufzeitBis[idx]" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="18:00" />
+                                        </div>
+                                    }
                                 </div>
+                                @if (auslaufzeitAnzahl < 4)
+                                {
+                                    <button type="button" @onclick="() => auslaufzeitAnzahl++" class="text-sm font-medium text-blue-600 hover:text-blue-700">+ Weitere Auslaufzeit</button>
+                                }
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-slate-700">Licht</label>
@@ -325,9 +329,8 @@
                             <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
                                 <h4 class="mb-3 text-sm font-medium text-slate-500">Zusatzdaten</h4>
                                 <dl class="grid gap-2 text-sm">
-                                    <div class="flex justify-between"><dt class="text-slate-500">Kontrollzeiten</dt><dd class="font-medium text-slate-900">@(model.KontrollzeitenVon) - @(model.KontrollzeitenBis)</dd></div>
-                                    <div class="flex justify-between"><dt class="text-slate-500">Auslauf Morgens</dt><dd class="font-medium text-slate-900">@(model.AuslaufzeitMorgensVon ?? "-") bis @(model.AuslaufzeitMorgensBis ?? "-")</dd></div>
-                                    <div class="flex justify-between"><dt class="text-slate-500">Auslauf Abends</dt><dd class="font-medium text-slate-900">@(model.AuslaufzeitAbendsVon ?? "-") bis @(model.AuslaufzeitAbendsBis ?? "-")</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Kontrollzeiten</dt><dd class="font-medium text-slate-900">@(string.Join(", ", model.Kontrollzeiten.Where(k => !string.IsNullOrEmpty(k))))</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Auslaufzeiten</dt><dd class="font-medium text-slate-900">@(string.Join(", ", Enumerable.Range(0, 4).Where(i => !string.IsNullOrEmpty(model.AuslaufzeitVon[i]) || !string.IsNullOrEmpty(model.AuslaufzeitBis[i])).Select(i => $"{model.AuslaufzeitVon[i] ?? "-"} bis {model.AuslaufzeitBis[i] ?? "-"}")))</dd></div>
                                     <div class="flex justify-between"><dt class="text-slate-500">Licht</dt><dd class="font-medium text-slate-900">@(model.LichtVon) - @(model.LichtBis)</dd></div>
                                     <div class="flex justify-between"><dt class="text-slate-500">Eigewicht</dt><dd class="font-medium text-slate-900">@(model.Eigewicht?.ToString() ?? "-") g</dd></div>
                                     <div class="flex justify-between"><dt class="text-slate-500">Körpergewicht</dt><dd class="font-medium text-slate-900">@(model.KoerpergewichtKg?.ToString("F3") ?? "-") kg</dd></div>
@@ -373,6 +376,8 @@
 @code {
     private int currentStep = 1;
     private DailyEntryFormModel model = new();
+    private int kontrollzeitAnzahl = 2;
+    private int auslaufzeitAnzahl = 1;
     private List<Stall> stalls = new();
     private bool missingPreviousDayData = false;
     private bool isSuccess = false;
@@ -552,17 +557,23 @@
             FutterWasserZyklusBis = model.FutterWasserZyklusBis,
             Bemerkungen = model.Bemerkungen,
             IstAusgestallt = model.IstAusgestallt,
-            AuslaufzeitMorgensVon = model.AuslaufzeitMorgensVon,
-            AuslaufzeitMorgensBis = model.AuslaufzeitMorgensBis,
-            AuslaufzeitAbendsVon = model.AuslaufzeitAbendsVon,
-            AuslaufzeitAbendsBis = model.AuslaufzeitAbendsBis,
+            Auslaufzeit1Von = model.AuslaufzeitVon[0],
+            Auslaufzeit1Bis = model.AuslaufzeitBis[0],
+            Auslaufzeit2Von = model.AuslaufzeitVon[1],
+            Auslaufzeit2Bis = model.AuslaufzeitBis[1],
+            Auslaufzeit3Von = model.AuslaufzeitVon[2],
+            Auslaufzeit3Bis = model.AuslaufzeitBis[2],
+            Auslaufzeit4Von = model.AuslaufzeitVon[3],
+            Auslaufzeit4Bis = model.AuslaufzeitBis[3],
             LichtVon = model.LichtVon,
             LichtBis = model.LichtBis,
             Eigewicht = model.Eigewicht,
             Koerpergewicht = model.KoerpergewichtKg.HasValue ? model.KoerpergewichtKg * 1000 : null,
             ZugaengeTiere = model.ZugaengeTiere,
-            KontrollzeitenVon = model.KontrollzeitenVon,
-            KontrollzeitenBis = model.KontrollzeitenBis
+            Kontrollzeit1 = model.Kontrollzeiten[0],
+            Kontrollzeit2 = model.Kontrollzeiten[1],
+            Kontrollzeit3 = model.Kontrollzeiten[2],
+            Kontrollzeit4 = model.Kontrollzeiten[3]
         };
 
             context.DailyEntries.Add(newEntry);
@@ -582,6 +593,8 @@
     private void ResetWizard()
     {
         model = new DailyEntryFormModel();
+        kontrollzeitAnzahl = 2;
+        auslaufzeitAnzahl = 1;
         if (DateTime.Now.Hour < 12)
         {
             model.Date = DateTime.Today.AddDays(-1);
@@ -621,17 +634,14 @@
         public decimal? FutterlieferungKg { get; set; }
         public string? Bemerkungen { get; set; }
         public bool IstAusgestallt { get; set; }
-        public string? AuslaufzeitMorgensVon { get; set; }
-        public string? AuslaufzeitMorgensBis { get; set; }
-        public string? AuslaufzeitAbendsVon { get; set; }
-        public string? AuslaufzeitAbendsBis { get; set; }
+        public string?[] AuslaufzeitVon { get; set; } = new string?[4];
+        public string?[] AuslaufzeitBis { get; set; } = new string?[4];
         public string? LichtVon { get; set; }
         public string? LichtBis { get; set; }
         public decimal? Eigewicht { get; set; }
         public decimal? KoerpergewichtKg { get; set; }
         public int? ZugaengeTiere { get; set; }
-        public string? KontrollzeitenVon { get; set; }
-        public string? KontrollzeitenBis { get; set; }
+        public string?[] Kontrollzeiten { get; set; } = new string?[4];
         public DateTime? FutterWasserZyklusBis { get; set; }
     }
 }

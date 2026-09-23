@@ -117,10 +117,17 @@ public class ExportService
                 ws.Cell(row, 13).Value = wasserProTier;
                 
                 ws.Cell(row, 14).Value = $"{entry.LichtVon}-{entry.LichtBis}";
-                ws.Cell(row, 15).Value = $"M: {entry.AuslaufzeitMorgensVon}-{entry.AuslaufzeitMorgensBis}\nA: {entry.AuslaufzeitAbendsVon}-{entry.AuslaufzeitAbendsBis}";
+                var auslaufzeiten = new[] {
+                    (entry.Auslaufzeit1Von, entry.Auslaufzeit1Bis),
+                    (entry.Auslaufzeit2Von, entry.Auslaufzeit2Bis),
+                    (entry.Auslaufzeit3Von, entry.Auslaufzeit3Bis),
+                    (entry.Auslaufzeit4Von, entry.Auslaufzeit4Bis)
+                }.Where(a => !string.IsNullOrEmpty(a.Item1) || !string.IsNullOrEmpty(a.Item2));
+                ws.Cell(row, 15).Value = string.Join("\n", auslaufzeiten.Select(a => $"{a.Item1}-{a.Item2}"));
                 ws.Cell(row, 15).Style.Alignment.WrapText = true;
-                
-                ws.Cell(row, 16).Value = $"{entry.KontrollzeitenVon}-{entry.KontrollzeitenBis}";
+
+                var kontrollzeiten = new[] { entry.Kontrollzeit1, entry.Kontrollzeit2, entry.Kontrollzeit3, entry.Kontrollzeit4 }.Where(k => !string.IsNullOrEmpty(k));
+                ws.Cell(row, 16).Value = string.Join(", ", kontrollzeiten);
                 ws.Cell(row, 17).Value = entry.Bemerkungen;
 
                 weeklyLosses += todayLosses;

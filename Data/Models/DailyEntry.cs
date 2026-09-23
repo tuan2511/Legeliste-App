@@ -53,32 +53,50 @@ public class DailyEntry
     public string? Bemerkungen { get; set; }
     
     [MaxLength(50)]
-    public string? AuslaufzeitMorgensVon { get; set; }
-    
+    public string? Auslaufzeit1Von { get; set; }
+
     [MaxLength(50)]
-    public string? AuslaufzeitMorgensBis { get; set; }
-    
+    public string? Auslaufzeit1Bis { get; set; }
+
     [MaxLength(50)]
-    public string? AuslaufzeitAbendsVon { get; set; }
-    
+    public string? Auslaufzeit2Von { get; set; }
+
     [MaxLength(50)]
-    public string? AuslaufzeitAbendsBis { get; set; }
-    
+    public string? Auslaufzeit2Bis { get; set; }
+
+    [MaxLength(50)]
+    public string? Auslaufzeit3Von { get; set; }
+
+    [MaxLength(50)]
+    public string? Auslaufzeit3Bis { get; set; }
+
+    [MaxLength(50)]
+    public string? Auslaufzeit4Von { get; set; }
+
+    [MaxLength(50)]
+    public string? Auslaufzeit4Bis { get; set; }
+
     public string? LichtVon { get; set; }
-    
+
     public string? LichtBis { get; set; }
-    
+
     public decimal? Eigewicht { get; set; }
-    
+
     public decimal? Koerpergewicht { get; set; }
-    
+
     public int? ZugaengeTiere { get; set; }
-    
+
     [MaxLength(20)]
-    public string? KontrollzeitenVon { get; set; }
-    
+    public string? Kontrollzeit1 { get; set; }
+
     [MaxLength(20)]
-    public string? KontrollzeitenBis { get; set; }
+    public string? Kontrollzeit2 { get; set; }
+
+    [MaxLength(20)]
+    public string? Kontrollzeit3 { get; set; }
+
+    [MaxLength(20)]
+    public string? Kontrollzeit4 { get; set; }
 
     [DataType(DataType.Date)]
     public DateTime? FutterWasserZyklusBis { get; set; }
