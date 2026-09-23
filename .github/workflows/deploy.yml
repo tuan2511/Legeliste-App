@@ -36,4 +36,4 @@ jobs:
 
     - name: ✅ Website wieder online schalten
       run: |
-        curl -sS "ftp://${{ secrets.FTP_SERVER }}/wwwroot/" --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" -Q "DELE app_offline.htm"
+        curl -sS "ftp://${{ secrets.FTP_SERVER }}/" --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" -Q "DELE /wwwroot/app_offline.htm"
