@@ -285,8 +285,8 @@
                                     <InputNumber @bind-Value="model.Eigewicht" placeholder="0" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                                 </div>
                                 <div class="space-y-2">
-                                    <label class="block text-sm font-medium text-slate-700">Körpergewicht (g)</label>
-                                    <InputNumber @bind-Value="model.Koerpergewicht" placeholder="0" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                                    <label class="block text-sm font-medium text-slate-700">Körpergewicht (kg)</label>
+                                    <InputNumber @bind-Value="model.KoerpergewichtKg" step="0.001" placeholder="0.000" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                                 </div>
                             </div>
                         </div>
@@ -330,7 +330,7 @@
                                     <div class="flex justify-between"><dt class="text-slate-500">Auslauf Abends</dt><dd class="font-medium text-slate-900">@(model.AuslaufzeitAbendsVon ?? "-") bis @(model.AuslaufzeitAbendsBis ?? "-")</dd></div>
                                     <div class="flex justify-between"><dt class="text-slate-500">Licht</dt><dd class="font-medium text-slate-900">@(model.LichtVon) - @(model.LichtBis)</dd></div>
                                     <div class="flex justify-between"><dt class="text-slate-500">Eigewicht</dt><dd class="font-medium text-slate-900">@(model.Eigewicht?.ToString() ?? "-") g</dd></div>
-                                    <div class="flex justify-between"><dt class="text-slate-500">Körpergewicht</dt><dd class="font-medium text-slate-900">@(model.Koerpergewicht?.ToString() ?? "-") g</dd></div>
+                                    <div class="flex justify-between"><dt class="text-slate-500">Körpergewicht</dt><dd class="font-medium text-slate-900">@(model.KoerpergewichtKg?.ToString("F3") ?? "-") kg</dd></div>
                                 </dl>
                             </div>
                             <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
@@ -559,7 +559,7 @@
             LichtVon = model.LichtVon,
             LichtBis = model.LichtBis,
             Eigewicht = model.Eigewicht,
-            Koerpergewicht = model.Koerpergewicht,
+            Koerpergewicht = model.KoerpergewichtKg.HasValue ? model.KoerpergewichtKg * 1000 : null,
             ZugaengeTiere = model.ZugaengeTiere,
             KontrollzeitenVon = model.KontrollzeitenVon,
             KontrollzeitenBis = model.KontrollzeitenBis
@@ -628,7 +628,7 @@
         public string? LichtVon { get; set; }
         public string? LichtBis { get; set; }
         public decimal? Eigewicht { get; set; }
-        public decimal? Koerpergewicht { get; set; }
+        public decimal? KoerpergewichtKg { get; set; }
         public int? ZugaengeTiere { get; set; }
         public string? KontrollzeitenVon { get; set; }
         public string? KontrollzeitenBis { get; set; }
