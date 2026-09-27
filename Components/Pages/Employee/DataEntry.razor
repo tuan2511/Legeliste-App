@@ -251,17 +251,17 @@
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-slate-700">Auslaufzeit</label>
-                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                <div class="space-y-3 mt-2">
                                     @for (int i = 0; i < auslaufzeitAnzahl; i++)
                                     {
                                         var idx = i;
                                         <div>
-                                            <label class="block text-xs font-medium text-slate-500 mb-1">Auslaufzeit @(idx + 1) von</label>
-                                            <InputText type="time" @bind-Value="model.AuslaufzeitVon[idx]" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="08:00" />
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-slate-500 mb-1">Auslaufzeit @(idx + 1) bis</label>
-                                            <InputText type="time" @bind-Value="model.AuslaufzeitBis[idx]" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="18:00" />
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">Auslaufzeit @(idx + 1)</label>
+                                            <div class="flex items-center gap-2">
+                                                <InputText type="time" @bind-Value="model.AuslaufzeitVon[idx]" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="08:00" />
+                                                <span class="shrink-0 text-sm text-slate-400">bis</span>
+                                                <InputText type="time" @bind-Value="model.AuslaufzeitBis[idx]" class="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="18:00" />
+                                            </div>
                                         </div>
                                     }
                                 </div>
