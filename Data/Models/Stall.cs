@@ -18,6 +18,9 @@ public class Stall
     [DataType(DataType.Date)]
     public DateTime Einstallungsdatum { get; set; }
 
+    /// <summary>Anzahl Tage, für die eine Futter-/Wasser-Ablesung in diesem Stall gilt (null/1 = täglich).</summary>
+    public int? FutterWasserZyklusTage { get; set; }
+
     // Navigation property
     public ICollection<DailyEntry> DailyEntries { get; set; } = new List<DailyEntry>();
 }
